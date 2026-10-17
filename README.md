@@ -96,8 +96,3 @@ public/index.html  single-page UI
 - The LLM sees the column names and the first few raw rows (to write the cleaning code) and the ranked strategy summaries (to draft messages). The full ledger never leaves the sandbox.
 - Human approval is required before any message is used. No autonomous sending, no legal advice.
 - Secrets live only in `.env` (git-ignored).
-
-## Credits
-
-Built solo by **Abdulrasaq Alatare** during the hackathon.
-AI assistance: **Claude (Anthropic)**, used as an engineering tool for planning, architecture and code generation.
