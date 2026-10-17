@@ -35,6 +35,9 @@ const sbEvent = (c, role, sb, status, extra = {}) => {
   c.emit({ type: "sandbox", role, id: sb.id, status, ...extra });
 };
 
+// Live progress while waiting on sandbox state: a UI note only, not a recorded status change.
+const tick = (c, role, sb) => (note, status) => c.emit({ type: "sandbox", role, id: sb.id, status, note });
+
 function preview(csvText) {
   const lines = csvText.replace(/\r/g, "").split("\n").filter(Boolean);
   const columns = lines[0].split(",").map((s) => s.trim());
@@ -87,22 +90,31 @@ async function runAnalysis(c, csv) {
 
   // 4. Snapshot the base and fork three isolated branches
   stage(c, "fork", "Pause base → fork 3 strategy branches", "active");
-  await box.pause(base);
+  await box.pause(base, tick(c, "base", base));
   sbEvent(c, "base", base, "paused");
 
   const results = {};
   // Forks are cloned one at a time (the parent snapshot is busy while forking)…
+  // …and one slow fork must not sink the others: record it as a failed branch and carry on.
+  const forked = [];
   for (const [letter, name] of Object.entries(STRATEGIES)) {
-    const child = await box.fork(base);
-    c.handles[`fork-${letter}`] = child;
-    sbEvent(c, `fork-${letter}`, child, "running", { strategy: `${letter} · ${name}` });
+    try {
+      const child = await box.fork(base, (note, status, sb) => tick(c, `fork-${letter}`, sb)(note, status));
+      c.handles[`fork-${letter}`] = child;
+      sbEvent(c, `fork-${letter}`, child, "running", { strategy: `${letter} · ${name}` });
+      forked.push([letter, name]);
+    } catch (err) {
+      if (err.sandboxId) c.emit({ type: "sandbox", role: `fork-${letter}`, id: err.sandboxId, status: "destroyed", strategy: `${letter} · ${name}`, note: "fork never started — destroyed" });
+      c.emit({ type: "branch", letter, name, ok: false, error: `Fork failed: ${err.message}` });
+    }
   }
+  if (!forked.length) throw new Error("No strategy branch could be forked.");
   // The snapshot has done its job — free its slot before the branches run.
   await box.destroyQuietly(base);
-  sbEvent(c, "base", base, "destroyed", { note: "snapshot forked ×3, then destroyed" });
+  sbEvent(c, "base", base, "destroyed", { note: `snapshot forked ×${forked.length}, then destroyed` });
 
-  // …then all three branches lock down and run in parallel.
-  await Promise.all(Object.entries(STRATEGIES).map(async ([letter, name]) => {
+  // …then the forked branches lock down and run in parallel.
+  await Promise.all(forked.map(async ([letter, name]) => {
     const role = `fork-${letter}`;
     const child = c.handles[role];
     const lock = await box.lockAndVerifyEgress(child);
@@ -137,7 +149,7 @@ async function runAnalysis(c, csv) {
     if (h) { await box.destroyQuietly(h); sbEvent(c, `fork-${l}`, h, "destroyed"); }
   }));
   const win = c.handles[`fork-${winner}`];
-  await box.pause(win);
+  await box.pause(win, tick(c, `fork-${winner}`, win));
   sbEvent(c, `fork-${winner}`, win, "paused", { note: "waiting for your approval — compute billing stopped" });
   c.status = "awaiting_approval";
   stage(c, "approve", "Waiting for your approval", "active");
@@ -147,16 +159,33 @@ export async function approveCase(c, drafts) {
   if (c.status !== "awaiting_approval") throw new Error(`Case is ${c.status}, not awaiting approval`);
   c.status = "publishing";
   const winner = c.result.winner;
-  const win = c.handles[`fork-${winner}`];
+  const role = `fork-${winner}`;
+  let win = c.handles[role];
   c.result.approvedDrafts = drafts;
   c.emit({ type: "approved", count: drafts.length });
   stage(c, "approve", "Waiting for your approval", "done");
 
   try {
     stage(c, "publish", "Resume → build dashboard → live URL", "active");
-    c.emit({ type: "sandbox", role: `fork-${winner}`, id: win.id, status: "paused", note: "resuming from snapshot…" });
-    await box.resume(win);
-    sbEvent(c, `fork-${winner}`, win, "running", { note: "resumed exactly where it paused" });
+    c.emit({ type: "sandbox", role, id: win.id, status: "paused", note: "resuming from snapshot…" });
+    try {
+      await box.resume(win, tick(c, role, win));
+      sbEvent(c, role, win, "running", { note: "resumed exactly where it paused" });
+    } catch (resumeErr) {
+      // Fallback: the paused winner is still a snapshot — restore it by forking into a fresh sandbox.
+      await win.refresh().catch(() => {});
+      if (win.status !== "paused") throw resumeErr;
+      c.emit({ type: "sandbox", role, id: win.id, status: "paused", note: "resume slow → restoring from snapshot via fork…" });
+      const restored = await box.fork(win, (note, status, sb) => tick(c, role, sb)(note, status));
+      const lock = await box.lockAndVerifyEgress(restored);
+      if (!lock.blocked) { await box.destroyQuietly(restored); throw new Error("Restored sandbox could reach the internet — aborting."); }
+      const old = win;
+      win = restored;
+      c.handles[role] = win;
+      await box.destroyQuietly(old);
+      sbEvent(c, role, win, "running", { note: "resume slow → restored from snapshot via fork" });
+      c.emit({ type: "egress", role, ...lock });
+    }
     await win.sh(`cp /work/strategy_${winner}.json /work/winner.json`);
     await box.upload(win, "/work/drafts.json", JSON.stringify(drafts, null, 2));
 
