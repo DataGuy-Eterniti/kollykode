@@ -57,7 +57,7 @@ export const config = {
   },
   llm: { provider, ...(PROVIDERS[provider] || PROVIDERS.groq) },
   databaseUrl: env("NEON_POSTGRES_CONNECTION_STRING", "DATABASE_URL", "POSTGRES_URL") || envLike("POSTGRES", "CONNECTION"),
-  maxFixAttempts: 4,
+  maxFixAttempts: 6,
 };
 
 export function describeConfig() {

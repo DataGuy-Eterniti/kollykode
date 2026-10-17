@@ -21,6 +21,7 @@ export async function writeRunFix({ sb, name, task, args = [], validator, emit }
     { role: "user", content: task },
   ];
   let messages = base;
+  let best = null; // best-so-far attempt { code, problems, score } — fixes build on this, not on a regression
 
   if (validator) await upload(sb, `/work/validate_${name}`, validator);
 
@@ -50,8 +51,12 @@ export async function writeRunFix({ sb, name, task, args = [], validator, emit }
     }
 
     emit({ type: "agent", phase: "failed", script: name, attempt, code, error: problems.slice(-2500) });
-    // Keep the context small (free-tier token limits): task + latest attempt + its error only.
-    messages = [...base, { role: "user", content: fixTask({ code, error: problems.slice(-1500) }) }];
+    // Score = top-level problem lines (indented lines are details). A crash scores worst. Ties go to the newer attempt.
+    const score = run.ok ? problems.split("\n").filter((l) => l.trim() && !/^\s/.test(l)).length : Infinity;
+    const regressed = best && score > best.score ? { now: score, best: best.score } : null;
+    if (!regressed) best = { code, score, problems: run.ok ? problems.slice(0, 2000) : problems.slice(-1500) };
+    // Keep the context small (free-tier token limits): task + best attempt + its errors only.
+    messages = [...base, { role: "user", content: fixTask({ code: best.code, error: best.problems, regressed }) }];
   }
 
   throw new Error(`${name} still failing after ${config.maxFixAttempts} attempts`);
@@ -111,11 +116,13 @@ else:
     if tcol and acol and ccol:
         r = raw.drop_duplicates()
         kind = r[tcol].str.strip().str.lower()
-        inv = r[kind.isin(["invoice", "inv"])]
+        is_inv, is_pay = kind.str.startswith("inv"), kind.str.startswith(("pay", "pmt", "credit"))
+        inv = r[is_inv]
         expect = inv.assign(v=inv[acol].map(amt)).groupby(inv[ccol].str.strip())["v"].sum()
         got = pd.to_numeric(df["invoice_amount"], errors="coerce").groupby(df["currency"].str.strip()).sum()
         # payments and credit notes both reduce what the buyer owes
-        pay = r[kind.isin(["payment", "pmt", "credit", "credit note"])]
+        pay = r[is_pay]
+        n_before = len(problems)
         pexp = pay.assign(v=pay[acol].map(amt)).groupby(pay[ccol].str.strip())["v"].sum()
         pgot = pd.to_numeric(df["amount_paid"], errors="coerce").groupby(df["currency"].str.strip()).sum()
         for cur, val in pexp.items():
@@ -128,6 +135,31 @@ else:
             if abs(g - val) > max(1.0, 0.005 * val):
                 problems.append(f"RECONCILIATION FAILED for {cur}: sum of invoice_amount is {g:,.2f} but the raw invoice rows total {val:,.2f}. "
                                 f"Check amount parsing (symbols like £ € $, codes like 'USD 8,200' or ' GBP', thousands commas, and European format like €12.400,50 = 12400.50) and that every invoice row ('Invoice', 'INV', 'invoice') is counted.")
+        if len(problems) > n_before:
+            # Details (indented): exactly which invoices differ, which are missing, and how types were classified.
+            byid = df.assign(_id=df["invoice_id"].str.strip()).drop_duplicates("_id").set_index("_id")
+            rid = r[idcol].str.strip()
+            gone = [i for i in dict.fromkeys(rid) if i not in byid.index]
+            if gone: problems.append(f"  missing from clean.csv ({len(gone)}): {gone[:5]}")
+            diffs = []
+            first_inv = inv.assign(_id=rid[is_inv]).drop_duplicates("_id")
+            for i, rawv in zip(first_inv["_id"], first_inv[acol]):
+                if i in byid.index:
+                    g = pd.to_numeric(byid.at[i, "invoice_amount"], errors="coerce")
+                    if not abs(g - amt(rawv)) <= 0.011:
+                        diffs.append(f"  {i}: invoice_amount raw {rawv!r} expected {amt(rawv):.2f}, got {byid.at[i, 'invoice_amount']}")
+            praw = pay.assign(_id=rid[is_pay]).groupby("_id")[acol].agg(list)
+            for i in byid.index:
+                if i not in set(rid): continue
+                vals = praw.get(i, [])
+                e = sum(amt(v) for v in vals)
+                g = pd.to_numeric(byid.at[i, "amount_paid"], errors="coerce")
+                if not abs(g - e) <= 0.011:
+                    diffs.append(f"  {i}: amount_paid raw {vals} expected {e:.2f}, got {byid.at[i, 'amount_paid']}")
+            if diffs: problems.append("  invoices that differ from the raw file:\n" + "\n".join(diffs[:4]))
+            other = sorted(set(r[tcol][~is_inv & ~is_pay]))
+            problems.append(f"  raw type values -> invoice: {sorted(set(r[tcol][is_inv]))} payment: {sorted(set(r[tcol][is_pay]))}"
+                            + (f" ignored: {other}" if other else ""))
     try:
         json.load(open("/work/clean_summary.json"))
     except Exception as e:

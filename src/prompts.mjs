@@ -25,6 +25,9 @@ days_overdue, aging_bucket, part_payment_count, last_payment_date
 
 Definitions:
 - As-of date is ${asOf}.
+- Type values may be abbreviated or differently cased (e.g. "INV", "invoice", "Pmt", "PAYMENT", "payment ", "Credit").
+  Classify by lowercase, stripped prefix: starts with "inv" → invoice; starts with "pay", "pmt" or "credit" → payment.
+  Use str.startswith — do NOT use regex word boundaries like \\binv\\b (they miss "invoice").
 - invoice_amount comes from the invoice row; amount_paid is the sum of that invoice's payment rows (after dropping exact duplicate rows). Credit-note rows (type "Credit") count as payments.
 - outstanding = max(invoice_amount - amount_paid, 0), rounded to 2 decimals.
 - issue_date, due_date, last_payment_date as YYYY-MM-DD (last_payment_date empty if none).
@@ -70,8 +73,12 @@ days overdue), and every approved message as a card (subject, buyer, body with l
 Design: white background, navy #0a2540 text, slate #425466 secondary text, accent #635bff, rounded cards with soft shadows, system-ui font.`;
 }
 
-export function fixTask({ code, error }) {
-  return `The script failed or produced invalid output.
+export function fixTask({ code, error, regressed }) {
+  const fmt = (n) => (n === Infinity ? "a crash" : `${n} problems`);
+  const worse = regressed
+    ? `Your last change made it worse (${fmt(regressed.now)} vs ${fmt(regressed.best)}). Start again from this better version.\n\n`
+    : "";
+  return `${worse}The script failed or produced invalid output.
 
 Script:
 \`\`\`python
