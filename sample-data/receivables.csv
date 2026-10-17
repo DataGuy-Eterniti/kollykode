@@ -1,0 +1,54 @@
+Invoice,Customer,Country,Currency,Type,Date,Due,Amount,Notes
+INV-2026-100,Harbor & Vine Foods,US,USD,Invoice,2026-07-07,21/08/2026,19677.74,Net 45
+INV-2026-101,Northgate Trading LLC,US,USD,Invoice,15/09/2026,Oct 15 2026,"$39,635.64",Net 30
+INV-2026-102,Calloway Imports,US,USD,Invoice,Sep 03 2026,2026-11-02,"28,474 USD",Net 60
+INV-2026-102,Calloway Imports,US,USD,Payment,26/09/2026,,"$14,237",part payment
+INV-2026-103,Brightline Media Inc,US,USD,Invoice,2026-09-18,18/10/2026,"$21,495",Net 30
+INV-2026-104,Pemberton Retail Ltd,UK,GBP,Invoice,10/09/2026,Oct 25 2026,5445.37,Net 45
+INV-2026-104,Pemberton Retail Ltd,UK,GBP,payment ,24/11/2026,,"£1,089",2nd part payment
+INV-2026-105,Ashford Cocoa Co,UK,GBP,Invoice,Jun 11 2026,,"£39,896.68",Net 30
+INV-2026-106,Kestrel Design Studio,UK,GBP,Invoice,2026-08-27,11/10/2026,"30,713 GBP",Net 45
+INV-2026-107,Rhein Agrarhandel GmbH,DE,EUR,Invoice,01/05/2026,May 31 2026,"€28,208",Net 30
+INV-2026-107,RHEIN AGRARHANDEL GMBH,DE,EUR,Payment,2026-05-14,,11283.37,part payment
+INV-2026-108,Maison Lumiere SARL,FR,EUR,Invoice,Aug 02 2026,2026-09-01,27251.92,Net 30
+INV-2026-109,Van Dijk Specerijen BV,NL,EUR,Invoice,2026-08-24,23/10/2026,"€20,815.71",Net 60
+INV-2026-110,Lakeshore Software Corp,US,USD,Invoice,12/05/2026,Jun 11 2026,"27,919 USD",Net 30
+INV-2026-111,Orchard Lane Grocers,UK,GBP,Invoice,May 07 2026,2026-06-21,"£6,023",Net 45
+INV-2026-112,Harbor & Vine Foods,US,USD,Invoice,2026-05-04,18/06/2026,18628.20,Net 45
+INV-2026-112,Harbor & Vine Foods,US,USD,Payment,Jun 28 2026,,"$9,314.10",part payment
+INV-2026-113,Northgate Trading LLC,US,USD,Invoice,11/09/2026,Oct 11 2026,"$30,169.65",Net 30
+INV-2026-114,Calloway Imports,US,USD,Invoice,May 23 2026,2026-08-21,"37,574 USD",Net 90
+INV-2026-115,Brightline Media Inc,US,USD,Invoice,2026-05-31,29/08/2026,"$18,122",Net 90
+INV-2026-116,Pemberton Retail Ltd,UK,GBP,Invoice,26/07/2026,,33912.94,Net 45
+INV-2026-117,Ashford Cocoa Co,UK,GBP,Invoice,Jul 27 2026,2026-08-26,"£28,083.03",Net 30
+INV-2026-117,ASHFORD COCOA CO,UK,GBP,Payment,06/09/2026,,"14,042 GBP",part payment
+INV-2026-117,Ashford Cocoa Co,UK,GBP,payment ,Oct 10 2026,,5616.61,2nd part payment
+INV-2026-117,Ashford Cocoa Co,UK,GBP,payment ,Oct 10 2026,,5616.61,2nd part payment
+INV-2026-118,Kestrel Design Studio,UK,GBP,Invoice,2026-07-02,30/09/2026,"14,675 GBP",Net 90
+INV-2026-119,Rhein Agrarhandel GmbH,DE,EUR,Invoice,09/09/2026,Oct 09 2026,"€25,158",Net 30
+INV-2026-120,Maison Lumiere SARL,FR,EUR,Invoice,Aug 16 2026,2026-10-15,8312.88,Net 60
+INV-2026-121,Van Dijk Specerijen BV,NL,EUR,Invoice,2026-05-25,23/08/2026,"€3,034.90",Net 90
+INV-2026-122,Lakeshore Software Corp,US,USD,Invoice,09/04/2026,May 09 2026,"36,982 USD",Net 30
+INV-2026-122,Lakeshore Software Corp,US,USD,Payment,2026-06-08,,"$18,491",part payment
+INV-2026-123,Orchard Lane Grocers,UK,GBP,Invoice,Jul 09 2026,2026-09-07,"£33,740",Net 60
+INV-2026-124,Harbor & Vine Foods,US,USD,Invoice,2026-04-28,27/07/2026,28339.10,Net 90
+INV-2026-125,Northgate Trading LLC,US,USD,Invoice,03/06/2026,Jul 03 2026,"$40,510.49",Net 30
+INV-2026-126,Calloway Imports,US,USD,Invoice,Jul 20 2026,2026-10-18,"33,822 USD",Net 90
+INV-2026-127,Brightline Media Inc,US,USD,Invoice,2026-09-11,,"$35,418",Net 30
+INV-2026-127,BRIGHTLINE MEDIA INC,US,USD,Payment,Nov 01 2026,,14167.30,part payment
+INV-2026-128,Pemberton Retail Ltd,UK,GBP,Invoice,03/05/2026,Aug 01 2026,14519.07,Net 90
+INV-2026-129,Ashford Cocoa Co,UK,GBP,Invoice,Jun 21 2026,2026-08-20,"£2,255.95",Net 60
+INV-2026-130,Kestrel Design Studio,UK,GBP,Invoice,2026-06-01,31/07/2026,"9,065 GBP",Net 60
+INV-2026-130,Kestrel Design Studio,UK,GBP,payment ,2026-08-15,,"£1,812.93",2nd part payment
+INV-2026-131,Rhein Agrarhandel GmbH,DE,EUR,Invoice,29/08/2026,Nov 27 2026,"€3,959",Net 90
+INV-2026-131,Rhein Agrarhandel GmbH,DE,EUR,Payment,08/10/2026,,"€3,959",paid in full
+INV-2026-132,Maison Lumiere SARL,FR,EUR,Invoice,Jul 16 2026,2026-08-30,35755.41,Net 45
+INV-2026-132,Maison Lumiere SARL,FR,EUR,Payment,20/08/2026,,"€14,302.16",part payment
+INV-2026-133,Van Dijk Specerijen BV,NL,EUR,Invoice,2026-05-23,22/06/2026,"€8,985.94",Net 30
+INV-2026-134,Lakeshore Software Corp,US,USD,Invoice,17/06/2026,Aug 16 2026,"42,542 USD",Net 60
+INV-2026-135,Orchard Lane Grocers,UK,GBP,Invoice,Jun 09 2026,2026-08-08,"£34,259",Net 60
+INV-2026-136,Harbor & Vine Foods,US,USD,Invoice,2026-06-28,26/09/2026,46021.82,Net 90
+INV-2026-137,Northgate Trading LLC,US,USD,Invoice,20/08/2026,Sep 19 2026,"$9,446.99",Net 30
+INV-2026-137,NORTHGATE TRADING LLC,US,USD,Payment,2026-10-11,,"2,362 USD",part payment
+INV-2026-138,Calloway Imports,US,USD,Invoice,Jul 30 2026,,"23,896 USD",Net 30
+INV-2026-139,Brightline Media Inc,US,USD,Invoice,2026-04-30,14/06/2026,"$13,497",Net 45

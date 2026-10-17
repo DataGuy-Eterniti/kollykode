@@ -1,0 +1,326 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>KollyKode — get paid by your foreign buyers</title>
+<style>
+  /* Organiser palette: Stripe navy / slate / blurple with the signature gradient */
+  :root{
+    --navy:#0a2540; --slate:#425466; --mute:#697386; --blurple:#635bff; --blurple-d:#4b45d6;
+    --bg:#ffffff; --bg2:#f6f9fc; --line:#e3e8ee; --ink:#0a2540;
+    --ok:#00a67e; --ok-bg:#e6f7f1; --warn:#c77700; --warn-bg:#fff4e0; --bad:#df1b41; --bad-bg:#fdecef;
+    --code-bg:#0a2540; --code-ink:#e3e8ee;
+    --grad: linear-gradient(115deg,#a960ee 0%,#ff333d 32%,#ff7a00 55%,#ffcb57 72%,#90e0ff 100%);
+    --mono: ui-monospace,"SFMono-Regular","JetBrains Mono",Consolas,monospace;
+    --sans: "Sohne","Inter",ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif;
+    --shadow: 0 2px 5px -1px rgba(50,50,93,.15), 0 1px 3px -1px rgba(0,0,0,.18);
+    --shadow-lg: 0 30px 60px -12px rgba(50,50,93,.25), 0 18px 36px -18px rgba(0,0,0,.3);
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.55 var(--sans);-webkit-font-smoothing:antialiased}
+  /* nav */
+  header{position:relative;z-index:3;display:flex;align-items:center;justify-content:space-between;gap:16px;padding:20px 48px;max-width:1440px;margin:0 auto}
+  .brand{font-weight:800;font-size:26px;letter-spacing:-.03em;color:var(--navy)} .brand span{color:var(--blurple)}
+  .chips{display:flex;gap:8px;flex-wrap:wrap}
+  .chip{font:600 12px var(--sans);padding:6px 12px;border-radius:99px;background:rgba(255,255,255,.85);color:var(--slate);box-shadow:var(--shadow);backdrop-filter:blur(6px)}
+  .chip::before{content:"";display:inline-block;width:7px;height:7px;border-radius:50%;margin-right:7px;background:var(--mute);vertical-align:1px}
+  .chip.ok::before{background:var(--ok)} .chip.bad::before{background:var(--bad)}
+  /* hero */
+  .hero-wrap{position:relative;overflow:hidden;border-bottom:1px solid var(--line)}
+  .hero-wrap::before{content:"";position:absolute;top:-40%;right:-26%;width:52%;height:190%;background:var(--grad);transform:skewX(-18deg) rotate(8deg);opacity:.9;filter:saturate(1.1);z-index:0}
+  .hero{position:relative;z-index:1;max-width:1440px;margin:0 auto;padding:56px 48px 64px}
+  .eyebrow{font-weight:600;font-size:15px;color:var(--navy);margin-bottom:22px}
+  .eyebrow b{font-weight:500;color:var(--slate);font-variant-numeric:tabular-nums}
+  h1{margin:0 0 30px;max-width:700px;font-size:clamp(34px,4.6vw,58px);line-height:1.08;letter-spacing:-.035em;font-weight:700;color:var(--navy)}
+  h1 .sub{color:var(--slate);font-weight:600} h1 em{font-style:normal;color:var(--blurple)}
+  .uploader{display:flex;gap:12px;flex-wrap:wrap;align-items:center;max-width:780px}
+  .drop{display:flex;align-items:center;gap:10px;padding:13px 18px;border:1.5px dashed #c1c9d2;border-radius:8px;background:rgba(255,255,255,.9);color:var(--slate);font-weight:600;cursor:pointer}
+  .drop:hover{border-color:var(--blurple);color:var(--blurple)}
+  #fileInfo{width:100%;margin:6px 0 0;color:var(--slate);font-weight:500}
+  button{font:600 15px var(--sans);border-radius:8px;border:1px solid var(--line);background:#fff;color:var(--blurple);padding:13px 20px;cursor:pointer;box-shadow:var(--shadow);transition:transform .12s,background .12s}
+  button:hover:not(:disabled){transform:translateY(-1px)}
+  button.primary{background:var(--blurple);border-color:var(--blurple);color:#fff}
+  button.primary:hover:not(:disabled){background:var(--blurple-d)}
+  button.primary::after{content:" ›";font-weight:700}
+  button:disabled{opacity:.45;cursor:not-allowed}
+  /* main */
+  main{display:grid;grid-template-columns:330px 1fr;gap:28px;padding:40px 48px 24px;max-width:1440px;margin:0 auto;background:var(--bg)}
+  @media (max-width:1000px){main{grid-template-columns:1fr;padding:28px 20px}.hero{padding:40px 20px}header{padding:18px 20px}}
+  .stack{display:flex;flex-direction:column;gap:24px}
+  .card{background:#fff;border:1px solid var(--line);border-radius:12px;padding:22px;box-shadow:var(--shadow)}
+  .card h2{margin:0 0 16px;font-size:13px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--blurple)}
+  p.mute,.mute{color:var(--mute)}
+  ol.stages{list-style:none;margin:0;padding:0;position:relative}
+  ol.stages li{display:flex;gap:12px;align-items:flex-start;padding:10px 0;color:var(--mute);font-weight:500;font-size:15px}
+  .dot{width:12px;height:12px;border-radius:50%;margin-top:6px;border:2px solid #c1c9d2;background:#fff;flex:none}
+  li.active{color:var(--navy)} li.active .dot{border-color:var(--blurple);background:var(--blurple);box-shadow:0 0 0 5px rgba(99,91,255,.18);animation:pulse 1.2s infinite}
+  li.done{color:var(--navy)} li.done .dot{border-color:var(--ok);background:var(--ok)}
+  li.err{color:var(--bad)} li.err .dot{border-color:var(--bad);background:var(--bad)}
+  @keyframes pulse{50%{box-shadow:0 0 0 9px rgba(99,91,255,.06)}}
+  .boxes{display:grid;grid-template-columns:repeat(4,1fr);gap:14px}
+  @media (max-width:1000px){.boxes{grid-template-columns:repeat(2,1fr)}}
+  .vm{border:1px solid var(--line);border-radius:10px;padding:14px;background:var(--bg2);min-height:150px;transition:all .2s}
+  .vm:not(.ghost){background:#fff;box-shadow:var(--shadow)}
+  .vm .role{font:700 12px var(--sans);letter-spacing:.08em;color:var(--blurple)}
+  .vm .id{font:11px var(--mono);color:var(--mute);word-break:break-all;margin:6px 0 8px}
+  .vm .strat{font-weight:700;color:var(--navy);margin-bottom:8px}
+  .pill{display:inline-block;font:700 11px var(--sans);letter-spacing:.04em;text-transform:uppercase;padding:3px 10px;border-radius:99px;background:#e3e8ee;color:var(--slate)}
+  .pill.running{background:var(--ok-bg);color:var(--ok)} .pill.paused{background:var(--warn-bg);color:var(--warn)}
+  .pill.destroyed{background:#f1f3f5;color:#a3acb9} .pill.failed{background:var(--bad-bg);color:var(--bad)}
+  .lock{margin-top:10px;font:11px/1.5 var(--mono);color:var(--slate)} .lock b{color:var(--ok)} .lock b.no{color:var(--bad)}
+  .vm.ghost{opacity:.6}
+  .attempt{border:1px solid var(--line);border-radius:10px;margin-bottom:12px;overflow:hidden}
+  .attempt .head{display:flex;justify-content:space-between;align-items:center;padding:10px 14px;background:var(--bg2);font:600 13px var(--mono);color:var(--navy)}
+  .st.ok{color:var(--ok)} .st.fail{color:var(--bad)} .st.run{color:var(--blurple)}
+  pre{margin:0;padding:14px;font:12px/1.5 var(--mono);overflow:auto;max-height:300px;white-space:pre;background:var(--code-bg);color:var(--code-ink)}
+  pre.err{background:var(--bad-bg);color:#a3122f;white-space:pre-wrap;max-height:180px}
+  details summary{cursor:pointer;padding:8px 14px;color:var(--mute);font:600 12px var(--sans)}
+  .kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:14px}
+  .kpi{border-radius:10px;padding:16px;background:var(--bg2);border:1px solid var(--line)}
+  .kpi .v{font-size:26px;font-weight:700;letter-spacing:-.03em;color:var(--navy);font-variant-numeric:tabular-nums}
+  .kpi .l{color:var(--mute);font-size:13px;font-weight:500}
+  table{width:100%;border-collapse:collapse;font-size:13px}
+  th,td{text-align:left;padding:8px;border-bottom:1px solid var(--line)} th{color:var(--mute);font-weight:600;font-size:12px}
+  td{color:var(--navy);font-variant-numeric:tabular-nums}
+  .branches{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
+  @media (max-width:1000px){.branches{grid-template-columns:1fr}}
+  .branch{border:1px solid var(--line);border-radius:10px;padding:14px;background:#fff}
+  .branch.win{border:2px solid var(--blurple);box-shadow:var(--shadow-lg)}
+  .branch h3{margin:0 0 6px;font-size:16px;color:var(--navy)}
+  .badge{font:700 11px var(--sans);color:#fff;background:var(--blurple);padding:3px 8px;border-radius:99px;margin-left:8px;vertical-align:2px}
+  .reason{background:#f2f1ff;border:1px solid #d6d3ff;border-radius:10px;padding:14px 16px;margin-top:16px;color:var(--navy)}
+  .draft{border:1px solid var(--line);border-radius:10px;padding:14px;margin-bottom:12px;background:var(--bg2)}
+  .draft label{display:flex;gap:8px;align-items:center;font-weight:700;color:var(--navy)}
+  .draft input[type=checkbox]{accent-color:var(--blurple);width:16px;height:16px}
+  .draft input[type=text],.draft textarea{width:100%;background:#fff;color:var(--navy);border:1px solid var(--line);border-radius:6px;padding:10px;font:14px var(--sans);margin-top:10px}
+  .draft input[type=text]:focus,.draft textarea:focus{outline:2px solid rgba(99,91,255,.4);border-color:var(--blurple)}
+  .draft textarea{min-height:130px;resize:vertical}
+  .live{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;border-radius:10px;padding:18px;color:#fff;background:linear-gradient(115deg,#635bff,#a960ee)}
+  .live a{color:#fff;font:700 15px var(--mono);word-break:break-all;text-decoration:underline}
+  .hidden{display:none!important}
+  .errbox{background:var(--bad-bg);border:1px solid #f7b6c2;color:#a3122f;border-radius:10px;padding:14px;font-weight:500}
+  footer{color:var(--mute);font-size:13px;text-align:center;padding:28px;border-top:1px solid var(--line);margin-top:24px}
+</style>
+</head>
+<body>
+<div class="hero-wrap">
+<header>
+  <div class="brand">Kolly<span>Kode</span></div>
+  <div class="chips" id="chips"></div>
+</header>
+<section class="hero">
+  <div class="eyebrow">Built on CreateOS Sandbox &amp; Stripe Projects · <b>agent-written code, zero internet egress</b></div>
+  <h1>Get paid by your foreign buyers. <span class="sub">An agent that writes, runs and <em>fixes its own code</em> to untangle your receivables.</span></h1>
+  <div class="uploader">
+    <label class="drop" id="drop">⤓ Drop a CSV or choose a file<input id="file" type="file" accept=".csv,text/csv" hidden></label>
+    <button id="sampleBtn">Use sample ledger</button>
+    <button id="runBtn" class="primary" disabled>Run agent</button>
+    <p id="fileInfo"></p>
+  </div>
+</section>
+</div>
+
+<main>
+  <div class="stack">
+    <section class="card">
+      <h2>Agent progress</h2>
+      <ol class="stages" id="stages"></ol>
+    </section>
+
+    <section class="card hidden" id="cleanupCard">
+      <button id="cleanupBtn">Destroy remaining sandboxes</button>
+    </section>
+  </div>
+
+  <div class="stack">
+    <div class="errbox hidden" id="errbox"></div>
+
+    <section class="card">
+      <h2>CreateOS sandboxes</h2>
+      <div class="boxes" id="boxes"></div>
+    </section>
+
+    <section class="card hidden" id="codeCard">
+      <h2>Code the agent wrote</h2>
+      <div id="attempts"></div>
+    </section>
+
+    <section class="card hidden" id="summaryCard">
+      <h2>Ledger after cleaning</h2>
+      <div class="kpis" id="kpis"></div>
+    </section>
+
+    <section class="card hidden" id="branchCard">
+      <h2>Strategy branches (forked, zero egress)</h2>
+      <div class="branches" id="branches"></div>
+      <div class="reason hidden" id="reason"></div>
+    </section>
+
+    <section class="card hidden" id="draftCard">
+      <h2>Review before anything goes out</h2>
+      <p class="mute">The winning sandbox is <b>paused</b> while you decide. Edit, untick, then approve.</p>
+      <div id="drafts"></div>
+      <button class="primary" id="approveBtn">Approve &amp; resume</button>
+    </section>
+
+    <section class="card hidden" id="liveCard">
+      <h2>Published</h2>
+      <div class="live"><span>Recovery dashboard, served from the sandbox's live URL</span><a id="liveUrl" target="_blank" rel="noopener"></a></div>
+    </section>
+  </div>
+</main>
+<footer>KollyKode · CreateOS Sandbox × Stripe Projects hackathon · built with assistance from Claude (Anthropic)</footer>
+
+<script>
+const $ = (id) => document.getElementById(id);
+const esc = (s) => String(s ?? "").replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+const money = (n, cur) => { try { return new Intl.NumberFormat("en", { style: "currency", currency: cur, maximumFractionDigits: 0 }).format(n); } catch { return `${cur} ${Math.round(n)}`; } };
+let csv = null, filename = null, caseId = null;
+const STAGES = [
+  ["base", "Create locked-down CreateOS sandbox"], ["clean", "Agent writes & fixes clean.py"],
+  ["strategy", "Agent writes & tests strategy.py"], ["fork", "Pause base → fork 3 strategy branches"],
+  ["compare", "Compare strategies & draft messages"], ["approve", "Waiting for your approval"],
+  ["publish", "Resume → build dashboard → live URL"],
+];
+const ROLES = [["base", "BASE"], ["fork-A", "FORK A"], ["fork-B", "FORK B"], ["fork-C", "FORK C"]];
+
+function renderStages() {
+  $("stages").innerHTML = STAGES.map(([k, l]) => `<li id="st-${k}"><span class="dot"></span><span>${l}<br><small class="mute" id="stx-${k}"></small></span></li>`).join("");
+}
+function renderBoxes() {
+  $("boxes").innerHTML = ROLES.map(([r, l]) => `<div class="vm ghost" id="vm-${r}"><div class="role">${l}</div><div class="id">—</div><div class="strat"></div><span class="pill">idle</span><div class="lock"></div></div>`).join("");
+}
+renderStages(); renderBoxes();
+
+fetch("/api/config").then((r) => r.json()).then((c) => {
+  $("chips").innerHTML = [
+    [`sandbox ${c.sandboxEndpoint.replace("https://", "")}`, c.sandboxKey.startsWith("set")],
+    [`LLM ${c.llm}`, c.llmKey === "set"],
+    [`audit → ${c.audit}`, true],
+  ].map(([t, ok]) => `<span class="chip ${ok ? "ok" : "bad"}">${esc(t)}</span>`).join("");
+});
+
+function setFile(name, text) {
+  filename = name; csv = text;
+  const rows = text.trim().split("\n").length - 1;
+  $("fileInfo").textContent = `${name} · ${rows} rows`;
+  $("runBtn").disabled = false;
+}
+$("file").onchange = async (e) => { const f = e.target.files[0]; if (f) setFile(f.name, await f.text()); };
+$("drop").ondragover = (e) => e.preventDefault();
+$("drop").ondrop = async (e) => { e.preventDefault(); const f = e.dataTransfer.files[0]; if (f) setFile(f.name, await f.text()); };
+$("sampleBtn").onclick = async () => setFile("receivables.csv", await (await fetch("/api/sample")).text());
+
+$("runBtn").onclick = async () => {
+  $("runBtn").disabled = true; $("sampleBtn").disabled = true;
+  const r = await fetch("/api/cases", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ filename, csv }) });
+  const j = await r.json();
+  if (!r.ok) return showError(j.error);
+  caseId = j.id;
+  $("cleanupCard").classList.remove("hidden");
+  const es = new EventSource(`/api/cases/${caseId}/events`);
+  es.onmessage = (m) => handle(JSON.parse(m.data));
+};
+
+function showError(msg) { $("errbox").textContent = "⚠ " + msg; $("errbox").classList.remove("hidden"); }
+
+const attempts = {};
+function handle(e) {
+  switch (e.type) {
+    case "stage": {
+      const li = $(`st-${e.key}`); if (!li) break;
+      li.className = e.status === "done" ? "done" : "active";
+      if (e.attempts) $(`stx-${e.key}`).textContent = `${e.attempts} attempt${e.attempts > 1 ? "s" : ""}`;
+      break;
+    }
+    case "sandbox": {
+      const vm = $(`vm-${e.role}`); if (!vm) break;
+      vm.classList.toggle("ghost", e.status === "destroyed");
+      vm.querySelector(".id").textContent = e.id;
+      if (e.strategy) vm.querySelector(".strat").textContent = e.strategy;
+      const pill = vm.querySelector(".pill"); pill.className = `pill ${e.status}`; pill.textContent = e.status;
+      if (e.note) vm.querySelector(".lock").innerHTML = esc(e.note);
+      break;
+    }
+    case "egress": {
+      const vm = $(`vm-${e.role}`); if (!vm) break;
+      vm.querySelector(".lock").innerHTML = `allowlist: ${esc(e.allowlist.join(", "))}<br>${esc(e.probe)} → <b class="${e.blocked ? "" : "no"}">${e.blocked ? "BLOCKED 🔒" : "REACHABLE"}</b>`;
+      break;
+    }
+    case "agent": {
+      $("codeCard").classList.remove("hidden");
+      const key = `${e.script}-${e.attempt}`;
+      let el = attempts[key];
+      if (!el) {
+        el = document.createElement("div"); el.className = "attempt";
+        el.innerHTML = `<div class="head"><span>${esc(e.script)} · attempt ${e.attempt} <small class="mdl" style="color:var(--mute);font-weight:500"></small></span><span class="st run">writing…</span></div><details open><summary>code</summary><pre class="code"></pre></details><pre class="err hidden"></pre>`;
+        $("attempts").prepend(el); attempts[key] = el;
+        Object.values(attempts).forEach((a) => { if (a !== el) a.querySelector("details").open = false; });
+      }
+      const st = el.querySelector(".st");
+      if (e.code) el.querySelector(".code").textContent = e.code;
+      if (e.model) el.querySelector(".mdl").textContent = `· ${e.model}`;
+      if (e.phase === "running") { st.textContent = "running in sandbox…"; st.className = "st run"; }
+      if (e.phase === "failed") { st.textContent = "✗ failed → agent fixing"; st.className = "st fail"; const err = el.querySelector(".err"); err.textContent = e.error; err.classList.remove("hidden"); }
+      if (e.phase === "succeeded") { st.textContent = `✓ passed (${e.ms ?? "?"} ms)`; st.className = "st ok"; }
+      break;
+    }
+    case "summary": {
+      $("summaryCard").classList.remove("hidden");
+      const s = e.summary || {}; const tot = s.total_outstanding_by_currency || {};
+      $("kpis").innerHTML = `<div class="kpi"><div class="v">${esc(s.invoices ?? "—")}</div><div class="l">invoices</div></div>` +
+        Object.entries(tot).map(([cur, v]) => `<div class="kpi"><div class="v">${money(v, cur)}</div><div class="l">outstanding · ${cur}</div></div>`).join("");
+      break;
+    }
+    case "branch": {
+      $("branchCard").classList.remove("hidden");
+      const d = document.createElement("div"); d.className = "branch"; d.id = `br-${e.letter}`;
+      if (!e.ok) d.innerHTML = `<h3>${e.letter} · ${esc(e.name)}</h3><pre class="err">${esc(e.error)}</pre>`;
+      else {
+        const m = e.result.metrics || {};
+        d.innerHTML = `<h3>${e.letter} · ${esc(e.name)}</h3>
+          <div class="mute" style="font-size:13px;margin-bottom:6px">${m.invoices_targeted ?? "?"} invoices · ${m.buyers_contacted ?? "?"} buyers · avg ${Math.round(m.avg_days_overdue ?? 0)} days overdue · ${Math.round(m.share_of_total_outstanding_pct ?? 0)}% of outstanding</div>
+          <table><tr><th>Invoice</th><th>Buyer</th><th>Owed</th><th>Late</th></tr>${(e.result.top || []).map((t) => `<tr><td>${esc(t.invoice_id)}</td><td>${esc(t.buyer)}</td><td>${money(t.outstanding, t.currency)}</td><td>${esc(t.days_overdue)}d</td></tr>`).join("")}</table>`;
+      }
+      $("branches").appendChild(d);
+      break;
+    }
+    case "decision": {
+      $(`br-${e.winner}`)?.classList.add("win");
+      $(`br-${e.winner}`)?.querySelector("h3")?.insertAdjacentHTML("beforeend", `<span class="badge">CHOSEN</span>`);
+      $("reason").innerHTML = `<b>Why ${e.winner} · ${esc(e.name)}:</b> ${esc(e.reasoning)}`; $("reason").classList.remove("hidden");
+      $("draftCard").classList.remove("hidden");
+      $("drafts").innerHTML = (e.drafts || []).map((d, i) => `<div class="draft" data-i="${i}">
+        <label><input type="checkbox" checked> ${esc(d.invoice_id)} · ${esc(d.buyer)}</label>
+        <input type="text" value="${esc(d.subject)}"><textarea>${esc(d.body)}</textarea></div>`).join("");
+      $("drafts").dataset.src = JSON.stringify(e.drafts || []);
+      break;
+    }
+    case "published": {
+      $("liveCard").classList.remove("hidden");
+      $("liveUrl").href = e.url; $("liveUrl").textContent = e.url;
+      break;
+    }
+    case "error":
+      showError(e.message);
+      if (e.retryable) { $("approveBtn").disabled = false; $("approveBtn").textContent = "Retry approve & resume"; break; }
+      document.querySelectorAll("li.active").forEach((li) => li.className = "err"); break;
+    case "approved": $("errbox").classList.add("hidden"); break;
+  }
+}
+
+$("approveBtn").onclick = async () => {
+  const src = JSON.parse($("drafts").dataset.src || "[]");
+  const drafts = [...document.querySelectorAll(".draft")].filter((d) => d.querySelector("input[type=checkbox]").checked).map((d) => ({
+    ...src[d.dataset.i], subject: d.querySelector("input[type=text]").value, body: d.querySelector("textarea").value,
+  }));
+  if (!drafts.length) return showError("Tick at least one message to approve.");
+  $("approveBtn").disabled = true; $("approveBtn").textContent = "Approved — resuming sandbox…";
+  const r = await fetch(`/api/cases/${caseId}/approve`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ drafts }) });
+  if (!r.ok) { showError((await r.json()).error); $("approveBtn").disabled = false; }
+};
+$("cleanupBtn").onclick = async () => { $("cleanupBtn").disabled = true; await fetch(`/api/cases/${caseId}/cleanup`, { method: "POST" }); $("cleanupBtn").textContent = "Sandboxes destroyed"; };
+</script>
+</body>
+</html>

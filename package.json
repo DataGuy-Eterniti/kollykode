@@ -1,0 +1,19 @@
+{
+  "name": "kollykode",
+  "version": "0.1.0",
+  "description": "An AI agent that writes, runs and fixes its own Python inside locked-down CreateOS Sandboxes to turn a messy receivables export into a recovery plan.",
+  "type": "module",
+  "private": true,
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "start": "node src/server.mjs",
+    "check": "node src/check.mjs"
+  },
+  "dependencies": {
+    "@nodeops-createos/sandbox": "^0.8.2",
+    "pg": "^8.13.0"
+  },
+  "license": "MIT"
+}
