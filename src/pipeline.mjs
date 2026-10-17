@@ -154,6 +154,7 @@ export async function approveCase(c, drafts) {
 
   try {
     stage(c, "publish", "Resume → build dashboard → live URL", "active");
+    c.emit({ type: "sandbox", role: `fork-${winner}`, id: win.id, status: "paused", note: "resuming from snapshot…" });
     await box.resume(win);
     sbEvent(c, `fork-${winner}`, win, "running", { note: "resumed exactly where it paused" });
     await win.sh(`cp /work/strategy_${winner}.json /work/winner.json`);
@@ -161,9 +162,9 @@ export async function approveCase(c, drafts) {
 
     const dash = await writeRunFix({
       sb: win, name: "build_dashboard.py", validator: VALIDATE_DASHBOARD, emit: c.emit,
-      task: dashboardTask({ title: `KollyKode recovery plan · ${STRATEGIES[winner]}` }),
+      task: dashboardTask({ title: `KollyKode recovery plan · ${STRATEGIES[winner]}`, summary: c.result.summary, winner: c.result.results[winner] }),
     });
-    const url = await box.publishSite(win);
+    const url = await box.publishSite(win, 8080, (step) => c.emit({ type: "sandbox", role: `fork-${winner}`, id: win.id, status: "running", note: step }));
     c.result.url = url;
     c.status = "done";
     c.emit({ type: "published", url, attempts: dash.attempts });

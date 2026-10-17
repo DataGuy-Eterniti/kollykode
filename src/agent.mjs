@@ -98,6 +98,14 @@ else:
         inv = r[r[tcol].str.strip().str.lower() == "invoice"]
         expect = inv.assign(v=inv[acol].str.replace(r"[^0-9.]", "", regex=True).astype(float)).groupby(inv[ccol].str.strip())["v"].sum()
         got = pd.to_numeric(df["invoice_amount"], errors="coerce").groupby(df["currency"].str.strip()).sum()
+        pay = r[r[tcol].str.strip().str.lower() == "payment"]
+        pexp = pay.assign(v=pay[acol].str.replace(r"[^0-9.]", "", regex=True).astype(float)).groupby(pay[ccol].str.strip())["v"].sum()
+        pgot = pd.to_numeric(df["amount_paid"], errors="coerce").groupby(df["currency"].str.strip()).sum()
+        for cur, val in pexp.items():
+            g = float(pgot.get(cur, 0))
+            if abs(g - val) > max(1.0, 0.005 * val):
+                problems.append(f"RECONCILIATION FAILED for {cur} payments: sum of amount_paid is {g:,.2f} but raw payment rows total {val:,.2f}. "
+                                f"Match payment rows case- and whitespace-insensitively (e.g. 'payment ', 'Payment') and drop exact duplicate rows first.")
         for cur, val in expect.items():
             g = float(got.get(cur, 0))
             if abs(g - val) > max(1.0, 0.005 * val):
@@ -133,12 +141,23 @@ print("\n".join(p[:8]))
 `;
 
 export const VALIDATE_DASHBOARD = String.raw`
-import os
+import os, json
 p = "/work/site/index.html"
-if not os.path.exists(p): print("/work/site/index.html was not created")
+problems = []
+if not os.path.exists(p): problems.append("/work/site/index.html was not created")
 else:
     s = open(p, encoding="utf-8").read()
-    if len(s) < 800: print("dashboard HTML is suspiciously short")
-    elif "<html" not in s.lower(): print("dashboard is not an HTML document")
-    elif "<script src" in s.lower() or 'rel="stylesheet" href="http' in s.lower(): print("dashboard must not load external assets")
+    low = s.lower()
+    if "<html" not in low: problems.append("dashboard is not an HTML document")
+    if "<script src" in low or 'rel="stylesheet" href="http' in low: problems.append("dashboard must not load external assets")
+    w = json.load(open("/work/winner.json"))
+    missing = [r["invoice_id"] for r in w.get("top", []) if str(r["invoice_id"]) not in s]
+    if missing: problems.append(f"dashboard is missing the winner's top invoices {missing} — read them from winner.json['top']")
+    d = json.load(open("/work/drafts.json"))
+    gone = [m["invoice_id"] for m in d if m.get("subject") and m["subject"][:25] not in s]
+    if gone: problems.append(f"dashboard is missing approved message cards for {gone} — show each draft's subject and body")
+    summ = json.load(open("/work/clean_summary.json"))
+    curs = list((summ.get("total_outstanding_by_currency") or {}).keys())
+    if curs and not all(c in s for c in curs): problems.append(f"dashboard must show outstanding totals for each currency {curs}")
+print("\n".join(problems))
 `;

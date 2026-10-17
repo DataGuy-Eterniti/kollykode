@@ -1,8 +1,22 @@
-# KollyKode
+<p align="center">
+  <img src="docs/banner.svg" alt="KollyKode — an agent that writes, runs and fixes its own code inside locked-down CreateOS sandboxes" width="100%">
+</p>
 
-**An AI agent that writes, runs and fixes its own Python inside locked-down CreateOS Sandboxes to turn an exporter's messy receivables ledger into a recovery plan.**
+<p align="center">
+  <b>An AI agent that writes, runs and fixes its own Python inside locked-down CreateOS Sandboxes.</b><br>
+  Upload a messy receivables ledger. Get a reconciled recovery plan and approved follow-ups — without your financial data ever touching the internet.
+</p>
 
-Built solo for the **CreateOS × Stripe Projects "Build Agents That Run Code"** hackathon (17 October 2026).
+<p align="center">
+  <img alt="license" src="https://img.shields.io/badge/license-MIT-635bff?style=flat-square&labelColor=0a2540">
+  <img alt="sandbox" src="https://img.shields.io/badge/sandbox-CreateOS-635bff?style=flat-square&labelColor=0a2540">
+  <img alt="stack" src="https://img.shields.io/badge/stack-Stripe%20Projects-a960ee?style=flat-square&labelColor=0a2540">
+  <img alt="egress" src="https://img.shields.io/badge/egress-blocked%20%26%20verified-ff7a00?style=flat-square&labelColor=0a2540">
+  <img alt="llm" src="https://img.shields.io/badge/LLM-gpt--oss%20via%20Groq%20%2F%20OpenRouter-ff333d?style=flat-square&labelColor=0a2540">
+  <img alt="db" src="https://img.shields.io/badge/audit-Neon%20Postgres-90e0ff?style=flat-square&labelColor=0a2540">
+</p>
+
+<p align="center"><sub>Built solo for the CreateOS × Stripe Projects <i>"Build Agents That Run Code"</i> hackathon · 17 October 2026</sub></p>
 
 ---
 
@@ -15,7 +29,7 @@ Underneath it all, the ledger is a mess: mixed date formats, amounts typed as `�
 ## What KollyKode does
 
 1. **Locks a CreateOS Sandbox down first.** The base sandbox is created with an egress allowlist of `127.0.0.1` only, then a real `curl` to the internet is run inside it to *prove* it's blocked before any data is uploaded.
-2. **Writes, runs and fixes its own code.** The agent writes `clean.py`, runs it in the sandbox, and a fixed validator (written by us, not the agent) checks the output. Any traceback or validation problem goes back to the LLM, which rewrites the script. Up to 4 attempts.
+2. **Writes, runs and fixes its own code.** The agent writes `clean.py`, runs it in the sandbox, and a fixed validator (written by us, not the agent) checks the output — including a **reconciliation check** that invoiced and paid totals per currency match an independent parse of the raw file, so the agent can't get the money wrong and still pass. Any traceback or failed check goes back to the LLM, which rewrites the script. First drafts come from a fast model; fixes escalate to a stronger one. Up to 4 attempts.
 3. **Writes a strategy engine** (`strategy.py`) and tests it inside the base sandbox.
 4. **Pauses and forks.** The base is snapshotted (paused) and forked into three branches — *Largest first*, *Oldest first*, *Most likely to pay*. Each fork is re-locked and re-verified, then all three run in parallel.
 5. **Compares and drafts.** The agent picks a strategy with reasoning and drafts professional follow-up emails (no threats, no invented fees, no bank details).

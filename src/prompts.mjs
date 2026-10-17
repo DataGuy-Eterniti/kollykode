@@ -56,13 +56,18 @@ share_of_total_outstanding_pct is the targeted outstanding as a share of all out
 Print the JSON at the end.`;
 }
 
-export function dashboardTask({ title }) {
+export function dashboardTask({ title, summary, winner }) {
   return `Write /work/build_dashboard.py.
-Inputs: /work/clean.csv, /work/clean_summary.json, /work/winner.json (the chosen strategy output) and
-/work/drafts.json (a list of approved follow-up messages: invoice_id, buyer, subject, body).
-Output: a single self-contained /work/site/index.html (inline CSS, no external assets, no JavaScript needed) titled "${title}".
-It must show: headline totals of outstanding by currency, a table of aging buckets, the chosen strategy and
-its top invoices, and each approved message in a readable card. Clean, modern, readable design.`;
+Inputs (exact contents shown so you use the right keys):
+- /work/clean_summary.json: ${JSON.stringify(summary).slice(0, 900)}
+- /work/winner.json: ${JSON.stringify(winner).slice(0, 1500)}
+- /work/drafts.json: a JSON list of approved messages, each {invoice_id, buyer, subject, body}
+- /work/clean.csv (columns invoice_id, buyer, currency, outstanding, days_overdue, aging_bucket, ...)
+Output: one self-contained /work/site/index.html (inline CSS only, no external assets, no JavaScript) titled "${title}".
+It must show: outstanding totals per currency as headline numbers, a table of invoice counts per aging bucket
+(computed from clean.csv), the chosen strategy name with a table of its top invoices (invoice_id, buyer, amount with currency,
+days overdue), and every approved message as a card (subject, buyer, body with line breaks kept). HTML-escape all text.
+Design: white background, navy #0a2540 text, slate #425466 secondary text, accent #635bff, rounded cards with soft shadows, system-ui font.`;
 }
 
 export function fixTask({ code, error }) {

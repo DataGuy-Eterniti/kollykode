@@ -1,0 +1,63 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1280" height="420" viewBox="0 0 1280 420" role="img" aria-label="KollyKode — an agent that writes, runs and fixes its own code inside locked-down CreateOS sandboxes">
+  <defs>
+    <linearGradient id="wedge" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#a960ee"/>
+      <stop offset=".35" stop-color="#ff333d"/>
+      <stop offset=".62" stop-color="#ff7a00"/>
+      <stop offset=".82" stop-color="#ffcb57"/>
+      <stop offset="1" stop-color="#90e0ff"/>
+    </linearGradient>
+    <linearGradient id="stroke" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#635bff"/>
+      <stop offset="1" stop-color="#a960ee"/>
+    </linearGradient>
+    <pattern id="grid" width="32" height="32" patternUnits="userSpaceOnUse">
+      <path d="M32 0H0V32" fill="none" stroke="#ffffff" stroke-opacity=".045"/>
+    </pattern>
+    <filter id="glow" x="-50%" y="-50%" width="200%" height="200%">
+      <feGaussianBlur stdDeviation="6" result="b"/>
+      <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+    <clipPath id="frame"><rect width="1280" height="420" rx="18"/></clipPath>
+  </defs>
+
+  <g clip-path="url(#frame)">
+    <rect width="1280" height="420" fill="#0a2540"/>
+    <rect width="1280" height="420" fill="url(#grid)"/>
+    <polygon points="1130,0 1280,0 1280,420 990,420" fill="url(#wedge)" opacity=".92"/>
+
+    <!-- base sandbox with lock -->
+    <g transform="translate(150 210)">
+      <rect x="-62" y="-62" width="124" height="124" rx="22" fill="none" stroke="url(#stroke)" stroke-width="7" filter="url(#glow)">
+        <animate attributeName="stroke-width" values="7;9;7" dur="2.4s" repeatCount="indefinite"/>
+      </rect>
+      <rect x="-22" y="-6" width="44" height="34" rx="6" fill="#635bff"/>
+      <path d="M-13 -6v-10a13 13 0 0 1 26 0v10" fill="none" stroke="#635bff" stroke-width="6" stroke-linecap="round"/>
+      <circle cx="0" cy="11" r="5" fill="#0a2540"/>
+    </g>
+
+    <!-- fork paths -->
+    <g fill="none" stroke="#8f88ff" stroke-width="4" stroke-linecap="round" stroke-dasharray="10 12">
+      <path d="M215 210 C 270 210, 280 120, 335 120"><animate attributeName="stroke-dashoffset" from="44" to="0" dur="1.2s" repeatCount="indefinite"/></path>
+      <path d="M215 210 L 335 210"><animate attributeName="stroke-dashoffset" from="44" to="0" dur="1.2s" repeatCount="indefinite"/></path>
+      <path d="M215 210 C 270 210, 280 300, 335 300"><animate attributeName="stroke-dashoffset" from="44" to="0" dur="1.2s" repeatCount="indefinite"/></path>
+    </g>
+    <g fill="#0a2540" stroke="#8f88ff" stroke-width="4">
+      <rect x="337" y="98" width="44" height="44" rx="10"/>
+      <rect x="337" y="188" width="44" height="44" rx="10"/>
+      <rect x="337" y="278" width="44" height="44" rx="10"/>
+    </g>
+    <g font-family="ui-monospace,SFMono-Regular,Menlo,Consolas,monospace" font-size="16" font-weight="700" fill="#ffffff" text-anchor="middle">
+      <text x="359" y="126">A</text><text x="359" y="216">B</text><text x="359" y="306">C</text>
+    </g>
+
+    <!-- wordmark -->
+    <g font-family="Inter,'Segoe UI',system-ui,-apple-system,Helvetica,Arial,sans-serif">
+      <text x="440" y="190" font-size="76" font-weight="800" fill="#ffffff" letter-spacing="-2">Kolly<tspan fill="#8f88ff">Kode</tspan></text>
+      <text x="444" y="240" font-size="26" font-weight="600" fill="#c9d6e8">Get paid by your foreign buyers.</text>
+      <text x="444" y="276" font-size="20" fill="#adbdcc">An agent that writes, runs &amp; fixes its own code —</text>
+      <text x="444" y="304" font-size="20" fill="#adbdcc">inside CreateOS sandboxes with zero internet egress.</text>
+      <text x="444" y="350" font-size="14" font-weight="700" fill="#8f88ff" letter-spacing="2.5">CREATEOS SANDBOX  ·  STRIPE PROJECTS</text>
+    </g>
+  </g>
+</svg>

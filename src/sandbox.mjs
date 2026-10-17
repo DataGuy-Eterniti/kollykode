@@ -78,28 +78,28 @@ export async function lockAndVerifyEgress(sb) {
 export async function pause(sb) {
   await sb.refresh().catch(() => {});
   if (sb.status !== "paused") await withRetry(() => sb.pause());
-  await withRetry(() => sb.waitUntilPaused());
+  await sb.waitUntilPaused({ timeoutMs: 90_000 });
 }
 
 export async function resume(sb) {
   await sb.refresh().catch(() => {});
-  if (sb.status === "paused") await withRetry(() => sb.resume());
-  await withRetry(() => sb.waitUntilRunning());
+  if (sb.status === "paused" || sb.status === "pausing") await withRetry(() => sb.resume(), 2);
+  await sb.waitUntilRunning({ timeoutMs: 90_000 });
 }
 
 export async function fork(parent) {
   const child = await withRetry(() => parent.fork({ start_paused: false }), 1);
-  await withRetry(() => child.waitUntilRunning());
+  await child.waitUntilRunning({ timeoutMs: 90_000 });
   return child;
 }
 
-export async function publishSite(sb, port = 8080) {
-  await sb.runCommand("bash", [
-    "-lc",
-    `cd ${WORKDIR}/site && nohup python3 -m http.server ${port} > /tmp/http.log 2>&1 &`,
-  ]);
-  await sb.waitForPortReady(port, { timeoutMs: 20_000 });
-  await sb.setIngress(true);
+export async function publishSite(sb, port = 8080, onStep = () => {}) {
+  onStep("starting web server inside the sandbox");
+  // A managed background process — runCommand would wait on a backgrounded server.
+  await withRetry(() => sb.processes.create({ cmd: "python3", args: ["-m", "http.server", String(port), "--bind", "0.0.0.0"], cwd: `${WORKDIR}/site` }));
+  await sb.waitForPortReady(port, { timeoutMs: 30_000 });
+  onStep("opening the public live URL (ingress)");
+  await withRetry(() => sb.setIngress(true));
   return sb.previewUrl(port);
 }
 
