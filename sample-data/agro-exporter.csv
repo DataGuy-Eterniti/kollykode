@@ -1,0 +1,46 @@
+Inv No,Client,Ctry,Ccy,Kind,Inv Date,Terms (days),Value,Remarks
+AGX-26-101,Zaandam Nut Traders BV,NL,EUR,INV,01 May 2026,60,"€64.540,00",Natural sesame seed 40MT
+AGX-26-102,Rotterdam Seed Importers BV,NL,EUR,INV,05-10-2026,90,"€49.233,00",Hulled sesame seed 40MT
+AGX-26-103,Saigon Cashew Processing JSC,VN,USD,invoice,2026/04/03,90,"USD 21,153.37",Natural sesame seed 20MT
+AGX-26-104,Mekong Agri Trading Co,VN,USD,invoice,2026/04/20,60,"USD 13,180.88",Raw cashew nuts W240 10MT
+AGX-26-105,Thames Wholefoods Ltd,UK,GBP,invoice,2026/10/01,60,"£15,358.46",Natural sesame seed 10MT
+AGX-26-106,Bristol Seed & Grain Ltd,UK,GBP,invoice,28 Aug 2026,90,"£12,190.82",Hulled sesame seed 10MT
+AGX-26-107,Great Lakes Snack Co,US,USD,INV,01 Aug 2026,30,"USD 42,736",Raw cashew nuts W320 40MT
+AGX-26-108,Sunbelt Ingredients Inc,US,USD,invoice,30 Jul 2026,45,"USD 39,081",Natural sesame seed 25MT
+AGX-26-108,Sunbelt Ingredients Inc,US,USD,PAYMENT,23 Sep 2026,,"USD 39,081",paid in full
+AGX-26-109,Zaandam Nut Traders BV,NL,EUR,invoice,2026/06/04,90,"€26.222,23",Raw cashew nuts W240 20MT
+AGX-26-110,Rotterdam Seed Importers BV,NL,EUR,invoice,2026/04/03,30,"€20.875,98",Raw cashew nuts W240 15MT
+AGX-26-111,Saigon Cashew Processing JSC,VN,USD,invoice,2026/07/29,90,"USD 32,959",Natural sesame seed 25MT
+AGX-26-112,Mekong Agri Trading Co,VN,USD,invoice,22 Jul 2026,60,"USD 39,787",Natural sesame seed 25MT
+AGX-26-112,Mekong Agri Trading Co,VN,USD,invoice,22 Jul 2026,60,"USD 39,787",Natural sesame seed 25MT
+AGX-26-112,Mekong Agri Trading Co,VN,USD,PAYMENT,30-09-2026,,"USD 15,914.80",part payment
+AGX-26-113,Thames Wholefoods Ltd,UK,GBP,INV,20-05-2026,90,"£18,556.00",Natural sesame seed 15MT
+AGX-26-114,Bristol Seed & Grain Ltd,UK,GBP,invoice,22 Apr 2026,45,"£14,859.00",Hulled sesame seed 15MT
+AGX-26-114,Bristol Seed & Grain Ltd,UK,GBP,Pmt,11 May 2026,,"£7,429.50",part payment
+AGX-26-115,Great Lakes Snack Co,US,USD,INV,2026/05/28,90,"USD 39,936.49",Raw cashew nuts W240 40MT
+AGX-26-115,Great Lakes Snack Co,US,USD,PAYMENT,05-08-2026,,"USD 15,974.60",part payment
+AGX-26-116,Sunbelt Ingredients Inc,US,USD,invoice,12-08-2026,45,"USD 22,765",Raw cashew nuts W320 25MT
+AGX-26-117,Zaandam Nut Traders BV,NL,EUR,invoice,2026/06/30,30,"€12.827,91",Hulled sesame seed 10MT
+AGX-26-117,Zaandam Nut Traders BV,NL,EUR,Pmt,06-09-2026,,"€6.413,95",part payment
+AGX-26-118,Rotterdam Seed Importers BV,NL,EUR,INV,30 Aug 2026,45,"€34.187,68",Raw cashew nuts W320 25MT
+AGX-26-119,Saigon Cashew Processing JSC,VN,USD,invoice,21 May 2026,45,"USD 13,862",Raw cashew nuts W240 10MT
+AGX-26-120,Mekong Agri Trading Co,VN,USD,INV,06 Apr 2026,45,"USD 42,562",Raw cashew nuts W240 40MT
+AGX-26-120,Mekong Agri Trading Co,VN,USD,PAYMENT,2026/05/10,,"USD 21,281",part payment
+AGX-26-121,Thames Wholefoods Ltd,UK,GBP,invoice,2026/05/18,60,"£16,463.74",Natural sesame seed 15MT
+AGX-26-122,Bristol Seed & Grain Ltd,UK,GBP,INV,02-08-2026,90,"£12,954.39",Raw cashew nuts W240 10MT
+AGX-26-123,Great Lakes Snack Co,US,USD,INV,2026/07/26,60,"USD 32,720",Raw cashew nuts W240 25MT
+AGX-26-124,Sunbelt Ingredients Inc,US,USD,INV,25 Aug 2026,45,"USD 13,655.88",Hulled sesame seed 10MT
+AGX-26-124,SUNBELT INGREDIENTS INC,US,USD,PAYMENT,10-10-2026,,"USD 4,096.76",part payment
+AGX-26-125,Zaandam Nut Traders BV,NL,EUR,INV,21 Jul 2026,45,"€14.134,10",Raw cashew nuts W320 10MT
+AGX-26-126,Rotterdam Seed Importers BV,NL,EUR,invoice,2026/08/29,30,"€31.977,00",Raw cashew nuts W320 20MT
+AGX-26-127,Saigon Cashew Processing JSC,VN,USD,INV,2026/06/05,90,"USD 9,430",Raw cashew nuts W320 10MT
+AGX-26-128,Mekong Agri Trading Co,VN,USD,invoice,2026/08/26,60,"USD 29,696",Raw cashew nuts W240 20MT
+AGX-26-129,Thames Wholefoods Ltd,UK,GBP,invoice,2026/09/21,30,"£30,919.51",Hulled sesame seed 20MT
+AGX-26-130,Bristol Seed & Grain Ltd,UK,GBP,INV,2026/07/21,30,"£28,429.51",Natural sesame seed 20MT
+AGX-26-131,Great Lakes Snack Co,US,USD,INV,06 Apr 2026,60,"USD 19,810",Raw cashew nuts W320 15MT
+AGX-26-131,Great Lakes Snack Co,US,USD,PAYMENT,23-04-2026,,"USD 7,924",part payment
+AGX-26-132,Sunbelt Ingredients Inc,US,USD,INV,2026/07/18,45,"USD 24,229.47",Raw cashew nuts W240 20MT
+AGX-26-132,Sunbelt Ingredients Inc,US,USD,PAYMENT,2026/09/15,,"USD 6,057.37",part payment
+AGX-26-133,Zaandam Nut Traders BV,NL,EUR,invoice,2026/05/08,45,"€9.124,47",Hulled sesame seed 10MT
+AGX-26-134,Rotterdam Seed Importers BV,NL,EUR,invoice,30 Aug 2026,30,"€19.721,05",Hulled sesame seed 15MT
+AGX-26-135,Saigon Cashew Processing JSC,VN,USD,INV,03 Apr 2026,45,"USD 23,593",Natural sesame seed 25MT

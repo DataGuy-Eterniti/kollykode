@@ -74,7 +74,13 @@ else:
     if df["invoice_id"].duplicated().any():
         problems.append(f"duplicate invoice_id rows: {df[df['invoice_id'].duplicated()]['invoice_id'].tolist()[:5]}")
     raw = pd.read_csv(sys.argv[1] if len(sys.argv) > 1 else "/work/input.csv", dtype=str, keep_default_na=False)
-    idcol = next((c for c in raw.columns if "inv" in c.lower()), raw.columns[0])
+    def find(keys, avoid=("date", "day", "term")):
+        # first column whose header contains one of the name variants (e.g. "Inv No", not "Inv Date")
+        for k in keys:
+            for c in raw.columns:
+                l = c.lower().strip()
+                if k in l and not any(a in l for a in avoid): return c
+    idcol = find(["invoice", "inv", "reference", "ref"]) or raw.columns[0]
     expected = raw[idcol].str.strip().nunique()
     if len(df) != expected: problems.append(f"expected {expected} invoices, got {len(df)}")
     for c in ["invoice_amount","amount_paid","outstanding","days_overdue","part_payment_count"]:
@@ -85,32 +91,43 @@ else:
         if bad.any():
             ex = ", ".join(f"{i}={v!r}" for i, v in df[bad][["invoice_id", c]].head(4).values)
             problems.append(f"{bad.sum()} rows have {c} not in YYYY-MM-DD form, e.g. {ex}. "
-                            f"Raw dates mix formats (ISO 2026-07-07, day-first 15/09/2026, and 'Sep 03 2026'); parse each format explicitly instead of one pd.to_datetime call.")
+                            f"Raw dates mix formats (e.g. ISO 2026-07-07, 2026/07/07, day-first 15/09/2026 or 15-09-2026, 'Sep 03 2026', '03 Sep 2026'); parse each format explicitly instead of one pd.to_datetime call.")
     bad = ~df["aging_bucket"].isin(["current","1-30","31-60","61-90","90+"])
     if bad.any(): problems.append(f"invalid aging_bucket values: {sorted(df[bad]['aging_bucket'].unique().tolist())[:5]}")
     out = pd.to_numeric(df["outstanding"], errors="coerce")
     if (out < 0).any(): problems.append("negative outstanding values")
     # Reconciliation: invoiced totals per currency must match an independent parse of the raw file.
-    cols = {c.lower().strip(): c for c in raw.columns}
-    tcol, acol, ccol = cols.get("type"), cols.get("amount"), cols.get("currency")
+    tcol, acol, ccol = find(["type", "kind"]), find(["amount", "value", "gross"]), find(["currency", "ccy"])
+    def amt(s):
+        # "$1,234.50", "28,474 USD", "€12.400,50" (European), "£3,050.00" → float
+        t = re.sub(r"[^0-9.,]", "", str(s))
+        if "," in t and "." in t:
+            t = t.replace(".", "").replace(",", ".") if t.rfind(",") > t.rfind(".") else t.replace(",", "")
+        elif "," in t:
+            t = t.replace(",", ".") if re.search(r"^\d+,\d{1,2}$", t) else t.replace(",", "")
+        elif t.count(".") > 1:
+            t = t.replace(".", "")
+        return float(t) if t else 0.0
     if tcol and acol and ccol:
         r = raw.drop_duplicates()
-        inv = r[r[tcol].str.strip().str.lower() == "invoice"]
-        expect = inv.assign(v=inv[acol].str.replace(r"[^0-9.]", "", regex=True).astype(float)).groupby(inv[ccol].str.strip())["v"].sum()
+        kind = r[tcol].str.strip().str.lower()
+        inv = r[kind.isin(["invoice", "inv"])]
+        expect = inv.assign(v=inv[acol].map(amt)).groupby(inv[ccol].str.strip())["v"].sum()
         got = pd.to_numeric(df["invoice_amount"], errors="coerce").groupby(df["currency"].str.strip()).sum()
-        pay = r[r[tcol].str.strip().str.lower() == "payment"]
-        pexp = pay.assign(v=pay[acol].str.replace(r"[^0-9.]", "", regex=True).astype(float)).groupby(pay[ccol].str.strip())["v"].sum()
+        # payments and credit notes both reduce what the buyer owes
+        pay = r[kind.isin(["payment", "pmt", "credit", "credit note"])]
+        pexp = pay.assign(v=pay[acol].map(amt)).groupby(pay[ccol].str.strip())["v"].sum()
         pgot = pd.to_numeric(df["amount_paid"], errors="coerce").groupby(df["currency"].str.strip()).sum()
         for cur, val in pexp.items():
             g = float(pgot.get(cur, 0))
             if abs(g - val) > max(1.0, 0.005 * val):
-                problems.append(f"RECONCILIATION FAILED for {cur} payments: sum of amount_paid is {g:,.2f} but raw payment rows total {val:,.2f}. "
-                                f"Match payment rows case- and whitespace-insensitively (e.g. 'payment ', 'Payment') and drop exact duplicate rows first.")
+                problems.append(f"RECONCILIATION FAILED for {cur} payments: sum of amount_paid is {g:,.2f} but raw payment and credit rows total {val:,.2f}. "
+                                f"Match payment rows case- and whitespace-insensitively (e.g. 'payment ', 'Pmt', 'PAYMENT'), count Credit rows as payments, and drop exact duplicate rows first.")
         for cur, val in expect.items():
             g = float(got.get(cur, 0))
             if abs(g - val) > max(1.0, 0.005 * val):
                 problems.append(f"RECONCILIATION FAILED for {cur}: sum of invoice_amount is {g:,.2f} but the raw invoice rows total {val:,.2f}. "
-                                f"Check amount parsing (symbols like £ € $, thousands commas, and suffixes like ' GBP').")
+                                f"Check amount parsing (symbols like £ € $, codes like 'USD 8,200' or ' GBP', thousands commas, and European format like €12.400,50 = 12400.50) and that every invoice row ('Invoice', 'INV', 'invoice') is counted.")
     try:
         json.load(open("/work/clean_summary.json"))
     except Exception as e:

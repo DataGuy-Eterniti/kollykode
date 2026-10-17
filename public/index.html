@@ -44,6 +44,8 @@
   button.primary:hover:not(:disabled){background:var(--blurple-d)}
   button.primary::after{content:" ›";font-weight:700}
   button:disabled{opacity:.45;cursor:not-allowed}
+  select{font:600 14px var(--sans);border-radius:8px;border:1px solid var(--line);background:#fff;color:var(--blurple);padding:12px 14px;cursor:pointer;box-shadow:var(--shadow)}
+  select:disabled{opacity:.45;cursor:not-allowed}
   /* main */
   main{display:grid;grid-template-columns:330px 1fr;gap:28px;padding:40px 48px 24px;max-width:1440px;margin:0 auto;background:var(--bg)}
   @media (max-width:1000px){main{grid-template-columns:1fr;padding:28px 20px}.hero{padding:40px 20px}header{padding:18px 20px}}
@@ -66,7 +68,7 @@
   .vm .id{font:11px var(--mono);color:var(--mute);word-break:break-all;margin:6px 0 8px}
   .vm .strat{font-weight:700;color:var(--navy);margin-bottom:8px}
   .pill{display:inline-block;font:700 11px var(--sans);letter-spacing:.04em;text-transform:uppercase;padding:3px 10px;border-radius:99px;background:#e3e8ee;color:var(--slate)}
-  .pill.running{background:var(--ok-bg);color:var(--ok)} .pill.paused{background:var(--warn-bg);color:var(--warn)}
+  .pill.running{background:var(--ok-bg);color:var(--ok)} .pill.paused,.pill.pausing,.pill.resuming,.pill.creating,.pill.forking{background:var(--warn-bg);color:var(--warn)}
   .pill.destroyed{background:#f1f3f5;color:#a3acb9} .pill.failed{background:var(--bad-bg);color:var(--bad)}
   .lock{margin-top:10px;font:11px/1.5 var(--mono);color:var(--slate)} .lock b{color:var(--ok)} .lock b.no{color:var(--bad)}
   .vm.ghost{opacity:.6}
@@ -113,8 +115,13 @@
   <div class="eyebrow">Built on CreateOS Sandbox &amp; Stripe Projects · <b>agent-written code, zero internet egress</b></div>
   <h1>Get paid by your foreign buyers. <span class="sub">An agent that writes, runs and <em>fixes its own code</em> to untangle your receivables.</span></h1>
   <div class="uploader">
-    <label class="drop" id="drop">⤓ Drop a CSV or choose a file<input id="file" type="file" accept=".csv,text/csv" hidden></label>
-    <button id="sampleBtn">Use sample ledger</button>
+    <label class="drop" id="drop">⤓ Drop a CSV or Excel (.xlsx) file, or choose one<input id="file" type="file" accept=".csv,text/csv,.xlsx,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" hidden></label>
+    <select id="sampleSel" aria-label="Use a sample ledger">
+      <option value="" selected disabled>Use a sample ledger…</option>
+      <option value="receivables.csv">Multi-currency exporter</option>
+      <option value="agro-exporter.csv">Cashew &amp; sesame exporter</option>
+      <option value="agency.csv">Lagos design agency</option>
+    </select>
     <button id="runBtn" class="primary" disabled>Run agent</button>
     <p id="fileInfo"></p>
   </div>
@@ -172,6 +179,7 @@
 </main>
 <footer>KollyKode · CreateOS Sandbox × Stripe Projects hackathon · built with assistance from Claude (Anthropic)</footer>
 
+<script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js" defer></script>
 <script>
 const $ = (id) => document.getElementById(id);
 const esc = (s) => String(s ?? "").replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
@@ -207,13 +215,25 @@ function setFile(name, text) {
   $("fileInfo").textContent = `${name} · ${rows} rows`;
   $("runBtn").disabled = false;
 }
-$("file").onchange = async (e) => { const f = e.target.files[0]; if (f) setFile(f.name, await f.text()); };
+// Excel files are converted to CSV here in the browser (first sheet); the server and agent only ever see CSV.
+async function loadFile(f) {
+  if (!/\.xlsx$/i.test(f.name)) return setFile(f.name, await f.text());
+  if (typeof XLSX === "undefined") return showError("Excel support failed to load — export the sheet as CSV instead.");
+  const wb = XLSX.read(await f.arrayBuffer(), { type: "array" });
+  setFile(f.name.replace(/\.xlsx$/i, ".csv"), XLSX.utils.sheet_to_csv(wb.Sheets[wb.SheetNames[0]], { blankrows: false }));
+}
+$("file").onchange = async (e) => { const f = e.target.files[0]; if (f) loadFile(f); };
 $("drop").ondragover = (e) => e.preventDefault();
-$("drop").ondrop = async (e) => { e.preventDefault(); const f = e.dataTransfer.files[0]; if (f) setFile(f.name, await f.text()); };
-$("sampleBtn").onclick = async () => setFile("receivables.csv", await (await fetch("/api/sample")).text());
+$("drop").ondrop = async (e) => { e.preventDefault(); const f = e.dataTransfer.files[0]; if (f) loadFile(f); };
+$("sampleSel").onchange = async (e) => {
+  const name = e.target.value;
+  const r = await fetch(`/api/sample?name=${encodeURIComponent(name)}`);
+  if (!r.ok) return showError((await r.json()).error);
+  setFile(name, await r.text());
+};
 
 $("runBtn").onclick = async () => {
-  $("runBtn").disabled = true; $("sampleBtn").disabled = true;
+  $("runBtn").disabled = true; $("sampleSel").disabled = true;
   const r = await fetch("/api/cases", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ filename, csv }) });
   const j = await r.json();
   if (!r.ok) return showError(j.error);

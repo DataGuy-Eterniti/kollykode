@@ -1,0 +1,35 @@
+Reference,Customer Name,Currency,Type,Issued,Due,Gross,Note
+LDA-2026-041,hartley & finch ltd  ,GBP,Invoice,2026-07-30,,"£16,950.00",Packaging design
+LDA-2026-042,Ravensbourne Press,GBP,Invoice,2026-04-21,2026-05-05,"£5,150",Pitch deck
+LDA-2026-042,Ravensbourne Press,GBP,Payment,2026-05-05,,"£2,575.00",bank transfer
+LDA-2026-043,Copperleaf Studios,GBP,Invoice,2026-05-16,,"£7,250",Website redesign
+LDA-2026-043,COPPERLEAF STUDIOS,GBP,Payment,2026-06-20,,"£7,250.00",bank transfer
+LDA-2026-044,Bluebird Coffee Co,USD,Invoice,2026-05-28,2026-07-12,"$10,300.00",Packaging design
+LDA-2026-045,summit health partners  ,USD,Invoice,2026-07-12,2026-08-11,"$8,050.00",Retainer
+LDA-2026-045,Summit Health Partners,USD,Payment,2026-08-18,,"$4,025",bank transfer
+LDA-2026-046,atlas fintech inc  ,USD,Invoice,2026-08-16,2026-08-30,"$3,750",Retainer
+LDA-2026-047,hartley & finch ltd  ,GBP,Invoice,2026-08-19,2026-10-03,"£12,600.00",Pitch deck
+LDA-2026-048,Ravensbourne Press,GBP,Invoice,2026-07-17,2026-08-31,"£10,950",Brand identity
+LDA-2026-048,ravensbourne press  ,GBP,Payment,2026-08-27,,"£5,475",bank transfer
+LDA-2026-049,Copperleaf Studios ,GBP,Invoice,2026-09-04,2026-10-19,"£15,950",Packaging design
+LDA-2026-050,Bluebird Coffee Co ,USD,Invoice,2026-06-09,2026-07-09,"$7,450",Pitch deck
+LDA-2026-050,Bluebird Coffee Co,USD,Credit,2026-06-21,,"$1,490.00",Credit note CN-007: reduced scope
+LDA-2026-051,Summit Health Partners ,USD,Invoice,2026-07-21,2026-08-20,"$16,850.00",Retainer
+LDA-2026-051,Summit Health Partners,USD,Payment,2026-08-15,,"$8,425",bank transfer
+LDA-2026-052,Atlas Fintech Inc,USD,Invoice,2026-04-21,2026-05-05,"$2,450.00",Website redesign
+LDA-2026-053,hartley & finch ltd  ,GBP,Invoice,2026-05-21,2026-06-04,"£12,950",Product UI sprint
+LDA-2026-054,Ravensbourne Press ,GBP,Invoice,2026-06-23,2026-07-23,"£3,650",Product UI sprint
+LDA-2026-054,Ravensbourne Press,GBP,Payment,2026-07-08,,"£1,825.00",bank transfer
+LDA-2026-055,Copperleaf Studios ,GBP,Invoice,2026-07-19,2026-08-02,"£12,400.00",Website redesign
+LDA-2026-056,bluebird coffee co  ,USD,Invoice,2026-06-02,2026-07-17,"$15,750.00",Pitch deck
+LDA-2026-057,summit health partners  ,USD,Invoice,2026-06-15,2026-07-15,"$14,000",Brand identity
+LDA-2026-058,ATLAS FINTECH INC,USD,Invoice,2026-09-18,2026-10-18,"$5,900",Brand identity
+LDA-2026-059,Hartley & Finch Ltd ,GBP,Invoice,2026-07-08,2026-08-22,"£11,450",Website redesign
+LDA-2026-060,ravensbourne press  ,GBP,Invoice,2026-10-06,2026-10-20,"£10,300.00",Product UI sprint
+LDA-2026-061,COPPERLEAF STUDIOS,GBP,Invoice,2026-06-15,2026-06-29,"£8,250.00",Website redesign
+LDA-2026-062,Bluebird Coffee Co,USD,Invoice,2026-08-10,2026-08-24,"$9,350",Website redesign
+LDA-2026-062,Bluebird Coffee Co ,USD,Payment,2026-09-27,,"$4,675",bank transfer
+LDA-2026-063,summit health partners  ,USD,Invoice,2026-04-16,2026-05-31,"$16,000.00",Pitch deck
+LDA-2026-064,Atlas Fintech Inc,USD,Invoice,2026-09-25,2026-10-25,"$14,700.00",Retainer
+LDA-2026-065,hartley & finch ltd  ,GBP,Invoice,2026-05-07,,"£5,000.00",Packaging design
+LDA-2026-065,hartley & finch ltd  ,GBP,Payment,2026-05-31,,"£5,000.00",bank transfer

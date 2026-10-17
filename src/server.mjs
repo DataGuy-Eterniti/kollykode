@@ -1,12 +1,15 @@
 // KollyKode web server: serves the UI and streams agent events over SSE.
 import http from "node:http";
-import { readFileSync } from "node:fs";
+import { readFileSync, readdirSync } from "node:fs";
 import { config, describeConfig } from "./config.mjs";
 import { auditBackend, auditTrail } from "./audit.mjs";
 import { startCase, getCase, approveCase, cleanupCase } from "./pipeline.mjs";
 
 const page = () => readFileSync(new URL("../public/index.html", import.meta.url));
-const sample = () => readFileSync(new URL("../sample-data/receivables.csv", import.meta.url), "utf8");
+const SAMPLES = new URL("../sample-data/", import.meta.url);
+// Only exact file names listed in sample-data/ are served — no paths, no traversal.
+const sample = (name) => (readdirSync(SAMPLES).includes(name) && /^[\w-]+\.csv$/.test(name)
+  ? readFileSync(new URL(name, SAMPLES), "utf8") : null);
 
 const send = (res, status, body, type = "application/json") => {
   res.writeHead(status, { "Content-Type": type, "Cache-Control": "no-store" });
@@ -28,7 +31,10 @@ const server = http.createServer(async (req, res) => {
   try {
     if (req.method === "GET" && url.pathname === "/") return send(res, 200, page(), "text/html; charset=utf-8");
     if (req.method === "GET" && url.pathname === "/api/config") return send(res, 200, { ...describeConfig(), audit: auditBackend() });
-    if (req.method === "GET" && url.pathname === "/api/sample") return send(res, 200, sample(), "text/csv; charset=utf-8");
+    if (req.method === "GET" && url.pathname === "/api/sample") {
+      const csv = sample(url.searchParams.get("name") || "receivables.csv");
+      return csv === null ? send(res, 400, { error: "Unknown sample file" }) : send(res, 200, csv, "text/csv; charset=utf-8");
+    }
 
     if (parts[0] === "api" && parts[1] === "cases") {
       if (req.method === "POST" && parts.length === 2) {

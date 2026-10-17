@@ -25,10 +25,10 @@ days_overdue, aging_bucket, part_payment_count, last_payment_date
 
 Definitions:
 - As-of date is ${asOf}.
-- invoice_amount comes from the invoice row; amount_paid is the sum of that invoice's payment rows (after dropping exact duplicate rows).
+- invoice_amount comes from the invoice row; amount_paid is the sum of that invoice's payment rows (after dropping exact duplicate rows). Credit-note rows (type "Credit") count as payments.
 - outstanding = max(invoice_amount - amount_paid, 0), rounded to 2 decimals.
 - issue_date, due_date, last_payment_date as YYYY-MM-DD (last_payment_date empty if none).
-- If due date is blank, due_date = issue_date + 60 days.
+- If due date is blank or there is no due-date column, due_date = issue_date + the payment-terms days column if one exists, else issue_date + 60 days.
 - days_overdue = max((as-of - due_date).days, 0).
 - aging_bucket is one of: "current", "1-30", "31-60", "61-90", "90+" (current = not yet overdue).
 - part_payment_count = number of payment rows for the invoice.
