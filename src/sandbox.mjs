@@ -83,15 +83,21 @@ export async function pause(sb, onTick) {
 
 // Poll sb.refresh() every 3s until `want`, reporting live status about every 5s so the UI never looks frozen.
 const DEAD = ["error", "failed", "destroying", "destroyed"];
-export async function waitForStatus(sb, want, { label = want, timeoutMs = 180_000, onTick = () => {} } = {}) {
+// resumeIfPaused: some forks come up "paused" despite start_paused:false — nudge them with one resume().
+export async function waitForStatus(sb, want, { label = want, timeoutMs = 180_000, onTick = () => {}, resumeIfPaused = false } = {}) {
   const t0 = Date.now();
-  let lastTick = 0;
+  let lastTick = 0, nudged = false;
   for (;;) {
     await sb.refresh().catch(() => {}); // a dropped poll is not a failure
     const s = sb.status;
     if (s === want) return sb;
     const elapsed = Date.now() - t0;
     const secs = Math.round(elapsed / 1000);
+    if (resumeIfPaused && s === "paused" && !nudged) {
+      nudged = true;
+      onTick(`${label}… ${secs}s (came up paused → resuming)`, s);
+      await withRetry(() => sb.resume(), 2).catch(() => {}); // if it fails, the normal timeout still applies
+    }
     if (DEAD.includes(s)) throw new Error(`Sandbox ${sb.id} went to "${s}" while ${label}`);
     if (elapsed >= timeoutMs) throw new Error(`Timed out after ${secs}s ${label} (status: ${s})`);
     if (elapsed - lastTick >= 5000) { lastTick = elapsed; onTick(`${label}… ${secs}s (status: ${s})`, s); }
@@ -111,7 +117,7 @@ export async function resume(sb, onTick) {
 export async function fork(parent, onTick = () => {}) {
   const child = await withRetry(() => parent.fork({ start_paused: false }), 1);
   try {
-    await waitForStatus(child, "running", { label: "forking", timeoutMs: 180_000, onTick: (note, s) => onTick(note, s, child) });
+    await waitForStatus(child, "running", { label: "forking", timeoutMs: 180_000, resumeIfPaused: true, onTick: (note, s) => onTick(note, s, child) });
   } catch (err) {
     await destroyQuietly(child); // a half-started fork still eats quota
     err.sandboxId = child.id;
