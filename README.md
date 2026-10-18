@@ -90,6 +90,8 @@ src/
 public/index.html  single-page UI
 ```
 
+Demo link: https://kollykode.onrender.com
+
 ## Privacy and safety
 
 - All agent-written code runs in an isolated micro-VM with outbound internet blocked and verified.
