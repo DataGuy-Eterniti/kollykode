@@ -29,6 +29,7 @@ Definitions:
   Classify by lowercase, stripped prefix: starts with "inv" → invoice; starts with "pay", "pmt" or "credit" → payment.
   Use str.startswith — do NOT use regex word boundaries like \\binv\\b (they miss "invoice").
 - invoice_amount comes from the invoice row; amount_paid is the sum of that invoice's payment rows (after dropping exact duplicate rows). Credit-note rows (type "Credit") count as payments.
+- Amounts: strip everything except digits, ., , and -. The decimal separator is whichever of . or , appears last; remove the other as a thousands separator. If only one separator appears and exactly 3 digits follow it, it is a thousands separator (USD 8,200 = 8200). So USD 21,153.37 = 21153.37 and €64.540,00 = 64540.00. When summing payments for an invoice with no payment rows, use 0 (don't index an empty DataFrame).
 - outstanding = max(invoice_amount - amount_paid, 0), rounded to 2 decimals.
 - issue_date, due_date, last_payment_date as YYYY-MM-DD (last_payment_date empty if none).
 - If due date is blank or there is no due-date column, due_date = issue_date + the payment-terms days column if one exists, else issue_date + 60 days.

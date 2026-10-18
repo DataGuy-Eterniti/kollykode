@@ -1,6 +1,21 @@
 // Thin wrapper over the CreateOS Sandbox SDK: every lifecycle step the agent uses.
-import { Sandbox } from "@nodeops-createos/sandbox";
+import { readFileSync, writeFileSync, mkdirSync } from "node:fs";
+import { Sandbox, CreateosSandboxClient } from "@nodeops-createos/sandbox";
 import { config } from "./config.mjs";
+
+// Every sandbox KollyKode creates is recorded in runs/sandboxes.json so a later run can free the quota it left behind.
+const TRACK = new URL("../runs/sandboxes.json", import.meta.url);
+const live = new Set(); // created by this server process — never treated as leftovers
+const readTracked = () => { try { return JSON.parse(readFileSync(TRACK, "utf8")); } catch { return []; } };
+function track(id, add) {
+  add ? live.add(id) : live.delete(id);
+  try {
+    const ids = new Set(readTracked());
+    add ? ids.add(id) : ids.delete(id);
+    mkdirSync(new URL("./", TRACK), { recursive: true });
+    writeFileSync(TRACK, JSON.stringify([...ids], null, 2));
+  } catch { /* tracking is best-effort */ }
+}
 
 const clientOpts = () => ({
   apiKey: config.sandbox.apiKey,
@@ -33,6 +48,7 @@ export async function createBase(name) {
     },
     clientOpts(),
   );
+  track(sb.id, true);
   await sb.waitUntilRunning();
   await sb.sh(`mkdir -p ${WORKDIR}/site`);
   return sb;
@@ -116,6 +132,7 @@ export async function resume(sb, onTick) {
 // onTick(note, status, child) — the child id is only known once the fork call returns.
 export async function fork(parent, onTick = () => {}) {
   const child = await withRetry(() => parent.fork({ start_paused: false }), 1);
+  track(child.id, true);
   try {
     await waitForStatus(child, "running", { label: "forking", timeoutMs: 180_000, resumeIfPaused: true, onTick: (note, s) => onTick(note, s, child) });
   } catch (err) {
@@ -138,5 +155,23 @@ export async function publishSite(sb, port = 8080, onStep = () => {}) {
 
 export async function destroyQuietly(sb) {
   if (!sb) return;
-  try { await sb.destroy(); } catch { /* already gone */ }
+  try { await sb.destroy(); } catch (e) {
+    if (e?.name !== "CreateosSandboxNotFoundError") return; // keep it tracked so a later run can retry
+  }
+  track(sb.id, false);
+}
+
+// Destroy sandboxes left by earlier KollyKode runs (tracked ids, or names starting "kk-"). Returns how many were freed.
+export async function freeLeftovers() {
+  const tracked = new Set(readTracked());
+  const all = await withRetry(() => new CreateosSandboxClient(clientOpts()).listSandboxes());
+  const gone = (s) => ["destroying", "destroyed"].includes(s.status);
+  const stale = all.filter((s) => !gone(s) && !live.has(s.id) && (tracked.has(s.id) || (s.name || "").startsWith("kk-")));
+  await Promise.all(stale.map(async (s) => {
+    await destroyQuietly(s);
+    await s.waitUntilDestroyed({ timeoutMs: 60_000 }).catch(() => {}); // quota frees once it is really gone
+  }));
+  const alive = new Set(all.filter((s) => !gone(s)).map((s) => s.id));
+  for (const id of tracked) if (!alive.has(id) && !live.has(id)) track(id, false); // prune ids that no longer exist
+  return stale.length;
 }

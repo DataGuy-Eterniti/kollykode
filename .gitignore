@@ -1,12 +1,16 @@
 # secrets — never commit
-.env
-.env.*
-!.env.example
-.projects/vault/
-.projects/cache/
 
 # deps and local output
 node_modules/
 runs/
 *.log
 .DS_Store
+
+.projects/cache
+.projects/vault
+.projects/state.test.json
+.projects/state.local.test.json
+.env
+.env.*
+!.env.example
+.createos.json

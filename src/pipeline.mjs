@@ -11,6 +11,22 @@ const STRATEGIES = { A: "Largest first", B: "Oldest first", C: "Most likely to p
 const cases = new Map();
 
 export const getCase = (id) => cases.get(id);
+// Public deploy runs one case at a time (sandbox quota is shared).
+export const busyCase = () => [...cases.values()].find((c) => ["running", "awaiting_approval", "publishing"].includes(c.status));
+
+// Release sandboxes automatically so an abandoned demo can't hold the quota.
+const APPROVAL_WINDOW_MS = 15 * 60_000;
+const LIVE_URL_MS = 10 * 60_000;
+function awaitApproval(c) {
+  c.status = "awaiting_approval";
+  clearTimeout(c.approvalTimer);
+  c.approvalTimer = setTimeout(async () => {
+    if (c.status !== "awaiting_approval") return;
+    await cleanupCase(c).catch(() => {});
+    c.emit({ type: "error", message: "Approval window expired — sandboxes released." });
+  }, APPROVAL_WINDOW_MS);
+  c.approvalTimer.unref();
+}
 
 function newCase(filename) {
   const id = randomUUID().slice(0, 8);
@@ -60,6 +76,9 @@ async function runAnalysis(c, csv) {
 
   // 1. Base sandbox, locked down from the start
   stage(c, "base", "Create locked-down CreateOS sandbox", "active");
+  // Free quota held by earlier runs first (free plan: 5 sandboxes, paused ones count).
+  const freed = await box.freeLeftovers().catch(() => 0);
+  c.emit({ type: "sandbox", role: "base", id: "—", status: "creating", freed, note: `freed ${freed} leftover sandbox${freed === 1 ? "" : "es"}` });
   const base = await box.createBase(`kk-${c.id}-base`);
   c.handles.base = base;
   sbEvent(c, "base", base, "running", { shape: config.sandbox.shape });
@@ -151,12 +170,13 @@ async function runAnalysis(c, csv) {
   const win = c.handles[`fork-${winner}`];
   await box.pause(win, tick(c, `fork-${winner}`, win));
   sbEvent(c, `fork-${winner}`, win, "paused", { note: "waiting for your approval — compute billing stopped" });
-  c.status = "awaiting_approval";
+  awaitApproval(c);
   stage(c, "approve", "Waiting for your approval", "active");
 }
 
 export async function approveCase(c, drafts) {
   if (c.status !== "awaiting_approval") throw new Error(`Case is ${c.status}, not awaiting approval`);
+  clearTimeout(c.approvalTimer);
   c.status = "publishing";
   const winner = c.result.winner;
   const role = `fork-${winner}`;
@@ -196,10 +216,11 @@ export async function approveCase(c, drafts) {
     const url = await box.publishSite(win, 8080, (step) => c.emit({ type: "sandbox", role: `fork-${winner}`, id: win.id, status: "running", note: step }));
     c.result.url = url;
     c.status = "done";
-    c.emit({ type: "published", url, attempts: dash.attempts });
+    c.emit({ type: "published", url, attempts: dash.attempts, expiresInMin: LIVE_URL_MS / 60_000 });
     stage(c, "publish", "Resume → build dashboard → live URL", "done");
+    setTimeout(() => cleanupCase(c).catch(() => {}), LIVE_URL_MS).unref();
   } catch (err) {
-    c.status = "awaiting_approval"; // keep the paused sandbox; the owner can click Approve again
+    awaitApproval(c); // keep the paused sandbox; the owner can click Approve again (the window restarts)
     c.emit({ type: "error", message: `${err.message} — the sandbox is still paused, click Approve to retry.`, retryable: true });
     return;
     c.emit({ type: "error", message: err.message });

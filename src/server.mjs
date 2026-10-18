@@ -3,7 +3,11 @@ import http from "node:http";
 import { readFileSync, readdirSync } from "node:fs";
 import { config, describeConfig } from "./config.mjs";
 import { auditBackend, auditTrail } from "./audit.mjs";
-import { startCase, getCase, approveCase, cleanupCase } from "./pipeline.mjs";
+import { startCase, getCase, busyCase, approveCase, cleanupCase } from "./pipeline.mjs";
+
+// Optional access code for public deploys: guards every POST (the routes that spend sandbox and LLM quota).
+const PASSCODE = process.env.DEMO_PASSCODE?.trim();
+const allowed = (req) => !PASSCODE || req.headers["x-kk-passcode"] === PASSCODE;
 
 const page = () => readFileSync(new URL("../public/index.html", import.meta.url));
 const SAMPLES = new URL("../sample-data/", import.meta.url);
@@ -30,7 +34,9 @@ const server = http.createServer(async (req, res) => {
   const parts = url.pathname.split("/").filter(Boolean);
   try {
     if (req.method === "GET" && url.pathname === "/") return send(res, 200, page(), "text/html; charset=utf-8");
-    if (req.method === "GET" && url.pathname === "/api/config") return send(res, 200, { ...describeConfig(), audit: auditBackend() });
+    if (req.method === "GET" && url.pathname === "/healthz") return send(res, 200, "ok", "text/plain; charset=utf-8");
+    if (req.method === "GET" && url.pathname === "/api/config") return send(res, 200, { ...describeConfig(), audit: auditBackend(), passcodeRequired: Boolean(PASSCODE) });
+    if (req.method === "POST" && !allowed(req)) return send(res, 401, { error: "Access code required" });
     if (req.method === "GET" && url.pathname === "/api/sample") {
       const csv = sample(url.searchParams.get("name") || "receivables.csv");
       return csv === null ? send(res, 400, { error: "Unknown sample file" }) : send(res, 200, csv, "text/csv; charset=utf-8");
@@ -40,6 +46,7 @@ const server = http.createServer(async (req, res) => {
       if (req.method === "POST" && parts.length === 2) {
         const { filename = "receivables.csv", csv } = await readJson(req);
         if (!csv || csv.split("\n").length < 2) return send(res, 400, { error: "Upload a CSV with a header and at least one row." });
+        if (busyCase()) return send(res, 429, { error: "Another run is in progress — try again in a few minutes." });
         const c = startCase({ filename, csv });
         return send(res, 201, { id: c.id });
       }
@@ -60,6 +67,7 @@ const server = http.createServer(async (req, res) => {
       if (req.method === "POST" && parts[3] === "approve") {
         const { drafts } = await readJson(req);
         if (!Array.isArray(drafts) || !drafts.length) return send(res, 400, { error: "Approve at least one message." });
+        if (c.status !== "awaiting_approval") return send(res, 409, { error: `This run is ${c.status} and can no longer be approved.` });
         approveCase(c, drafts).catch(() => {});
         return send(res, 202, { ok: true });
       }
@@ -74,7 +82,7 @@ const server = http.createServer(async (req, res) => {
   }
 });
 
-server.listen(config.port, () => {
+server.listen(config.port, "0.0.0.0", () => {
   console.log(`\n  KollyKode running → http://localhost:${config.port}\n`);
   console.table(describeConfig());
 });

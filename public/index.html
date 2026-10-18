@@ -46,6 +46,7 @@
   button:disabled{opacity:.45;cursor:not-allowed}
   select{font:600 14px var(--sans);border-radius:8px;border:1px solid var(--line);background:#fff;color:var(--blurple);padding:12px 14px;cursor:pointer;box-shadow:var(--shadow)}
   select:disabled{opacity:.45;cursor:not-allowed}
+  .passcode{font:600 14px var(--sans);border-radius:8px;border:1px solid var(--line);background:#fff;color:var(--navy);padding:12px 14px;box-shadow:var(--shadow);width:150px}
   /* main */
   main{display:grid;grid-template-columns:330px 1fr;gap:28px;padding:40px 48px 24px;max-width:1440px;margin:0 auto;background:var(--bg)}
   @media (max-width:1000px){main{grid-template-columns:1fr;padding:28px 20px}.hero{padding:40px 20px}header{padding:18px 20px}}
@@ -122,6 +123,7 @@
       <option value="agro-exporter.csv">Cashew &amp; sesame exporter</option>
       <option value="agency.csv">Lagos design agency</option>
     </select>
+    <input id="passcode" class="passcode hidden" type="password" placeholder="Access code" aria-label="Access code" autocomplete="off">
     <button id="runBtn" class="primary" disabled>Run agent</button>
     <p id="fileInfo"></p>
   </div>
@@ -174,6 +176,7 @@
     <section class="card hidden" id="liveCard">
       <h2>Published</h2>
       <div class="live"><span>Recovery dashboard, served from the sandbox's live URL</span><a id="liveUrl" target="_blank" rel="noopener"></a></div>
+      <p class="mute" id="liveNote"></p>
     </section>
   </div>
 </main>
@@ -207,7 +210,19 @@ fetch("/api/config").then((r) => r.json()).then((c) => {
     [`LLM ${c.llm}`, c.llmKey === "set"],
     [`audit → ${c.audit}`, true],
   ].map(([t, ok]) => `<span class="chip ${ok ? "ok" : "bad"}">${esc(t)}</span>`).join("");
+  if (c.passcodeRequired) $("passcode").classList.remove("hidden");
 });
+
+// Access code (public deploys): remembered for this tab only, sent on every POST.
+try { $("passcode").value = sessionStorage.getItem("kk-passcode") || ""; } catch {}
+$("passcode").oninput = () => { try { sessionStorage.setItem("kk-passcode", $("passcode").value); } catch {} };
+async function post(url, body = {}) {
+  const r = await fetch(url, { method: "POST", headers: { "Content-Type": "application/json", "x-kk-passcode": $("passcode").value.trim() }, body: JSON.stringify(body) });
+  const j = await r.json().catch(() => ({}));
+  if (r.status === 401) j.error = "Access code required or incorrect — enter the access code next to Run agent and try again.";
+  if (r.status === 429) j.error = j.error || "Another run is in progress — try again in a few minutes.";
+  return { ok: r.ok, j };
+}
 
 function setFile(name, text) {
   filename = name; csv = text;
@@ -234,9 +249,9 @@ $("sampleSel").onchange = async (e) => {
 
 $("runBtn").onclick = async () => {
   $("runBtn").disabled = true; $("sampleSel").disabled = true;
-  const r = await fetch("/api/cases", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ filename, csv }) });
-  const j = await r.json();
-  if (!r.ok) return showError(j.error);
+  const { ok, j } = await post("/api/cases", { filename, csv });
+  if (!ok) { $("runBtn").disabled = false; $("sampleSel").disabled = false; return showError(j.error); }
+  $("errbox").classList.add("hidden");
   caseId = j.id;
   $("cleanupCard").classList.remove("hidden");
   const es = new EventSource(`/api/cases/${caseId}/events`);
@@ -252,6 +267,12 @@ function handle(e) {
       const li = $(`st-${e.key}`); if (!li) break;
       li.className = e.status === "done" ? "done" : "active";
       if (e.attempts) $(`stx-${e.key}`).textContent = `${e.attempts} attempt${e.attempts > 1 ? "s" : ""}`;
+      // Fixed A/B/C slots as soon as forking starts, filled in place as results arrive (no reordering).
+      if (e.key === "fork" && e.status === "active" && !$("br-A")) {
+        $("branchCard").classList.remove("hidden");
+        $("branches").innerHTML = [["A", "Largest first"], ["B", "Oldest first"], ["C", "Most likely to pay"]]
+          .map(([l, n]) => `<div class="branch" id="br-${l}"><h3>${l} · ${n}</h3><div class="mute">waiting…</div></div>`).join("");
+      }
       break;
     }
     case "sandbox": {
@@ -261,11 +282,12 @@ function handle(e) {
       if (e.strategy) vm.querySelector(".strat").textContent = e.strategy;
       const pill = vm.querySelector(".pill"); pill.className = `pill ${e.status}`; pill.textContent = e.status;
       if (e.note) vm.querySelector(".lock").innerHTML = esc(e.note);
+      if (e.freed !== undefined) vm.dataset.freed = e.note; // kept above the egress proof
       break;
     }
     case "egress": {
       const vm = $(`vm-${e.role}`); if (!vm) break;
-      vm.querySelector(".lock").innerHTML = `allowlist: ${esc(e.allowlist.join(", "))}<br>${esc(e.probe)} → <b class="${e.blocked ? "" : "no"}">${e.blocked ? "BLOCKED 🔒" : "REACHABLE"}</b>`;
+      vm.querySelector(".lock").innerHTML = (vm.dataset.freed ? `${esc(vm.dataset.freed)}<br>` : "") + `allowlist: ${esc(e.allowlist.join(", "))}<br>${esc(e.probe)} → <b class="${e.blocked ? "" : "no"}">${e.blocked ? "BLOCKED 🔒" : "REACHABLE"}</b>`;
       break;
     }
     case "agent": {
@@ -295,7 +317,8 @@ function handle(e) {
     }
     case "branch": {
       $("branchCard").classList.remove("hidden");
-      const d = document.createElement("div"); d.className = "branch"; d.id = `br-${e.letter}`;
+      let d = $(`br-${e.letter}`);
+      if (!d) { d = document.createElement("div"); d.className = "branch"; d.id = `br-${e.letter}`; $("branches").appendChild(d); }
       if (!e.ok) d.innerHTML = `<h3>${e.letter} · ${esc(e.name)}</h3><pre class="err">${esc(e.error)}</pre>`;
       else {
         const m = e.result.metrics || {};
@@ -303,7 +326,6 @@ function handle(e) {
           <div class="mute" style="font-size:13px;margin-bottom:6px">${m.invoices_targeted ?? "?"} invoices · ${m.buyers_contacted ?? "?"} buyers · avg ${Math.round(m.avg_days_overdue ?? 0)} days overdue · ${Math.round(m.share_of_total_outstanding_pct ?? 0)}% of outstanding</div>
           <table><tr><th>Invoice</th><th>Buyer</th><th>Owed</th><th>Late</th></tr>${(e.result.top || []).map((t) => `<tr><td>${esc(t.invoice_id)}</td><td>${esc(t.buyer)}</td><td>${money(t.outstanding, t.currency)}</td><td>${esc(t.days_overdue)}d</td></tr>`).join("")}</table>`;
       }
-      $("branches").appendChild(d);
       break;
     }
     case "decision": {
@@ -320,11 +342,13 @@ function handle(e) {
     case "published": {
       $("liveCard").classList.remove("hidden");
       $("liveUrl").href = e.url; $("liveUrl").textContent = e.url;
+      if (e.expiresInMin) $("liveNote").textContent = `This link stops working about ${e.expiresInMin} minutes after publishing, when the sandbox is released.`;
       break;
     }
     case "error":
       showError(e.message);
       if (e.retryable) { $("approveBtn").disabled = false; $("approveBtn").textContent = "Retry approve & resume"; break; }
+      $("approveBtn").disabled = true;
       document.querySelectorAll("li.active").forEach((li) => li.className = "err"); break;
     case "approved": $("errbox").classList.add("hidden"); break;
   }
@@ -337,10 +361,15 @@ $("approveBtn").onclick = async () => {
   }));
   if (!drafts.length) return showError("Tick at least one message to approve.");
   $("approveBtn").disabled = true; $("approveBtn").textContent = "Approved — resuming sandbox…";
-  const r = await fetch(`/api/cases/${caseId}/approve`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ drafts }) });
-  if (!r.ok) { showError((await r.json()).error); $("approveBtn").disabled = false; }
+  const { ok, j } = await post(`/api/cases/${caseId}/approve`, { drafts });
+  if (!ok) { showError(j.error); $("approveBtn").disabled = false; $("approveBtn").textContent = "Retry approve & resume"; }
 };
-$("cleanupBtn").onclick = async () => { $("cleanupBtn").disabled = true; await fetch(`/api/cases/${caseId}/cleanup`, { method: "POST" }); $("cleanupBtn").textContent = "Sandboxes destroyed"; };
+$("cleanupBtn").onclick = async () => {
+  $("cleanupBtn").disabled = true;
+  const { ok, j } = await post(`/api/cases/${caseId}/cleanup`);
+  if (!ok) { $("cleanupBtn").disabled = false; return showError(j.error); }
+  $("cleanupBtn").textContent = "Sandboxes destroyed";
+};
 </script>
 </body>
 </html>

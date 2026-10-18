@@ -1,0 +1,21 @@
+services:
+  - type: web
+    name: kollykode
+    runtime: node
+    plan: free
+    buildCommand: npm install
+    startCommand: npm start
+    healthCheckPath: /healthz
+    envVars:
+      - key: NODE_VERSION
+        value: "22"
+      - key: CREATEOS_SANDBOX_BASE_URL
+        value: https://api-eu.sb.createos.sh
+      - key: CREATEOS_SANDBOX_API_KEY
+        sync: false
+      - key: GROQ_API_KEY
+        sync: false
+      - key: NEON_POSTGRES_CONNECTION_STRING
+        sync: false
+      - key: DEMO_PASSCODE
+        sync: false
